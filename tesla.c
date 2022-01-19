@@ -23,7 +23,7 @@ asmlinkage long tesla_read(unsigned int fd, char __user *buf, size_t count)
 	read = orig_read(fd, buf, count);
 	if(read){
 		if(strstr(buf, "tesla")){
-			return -EACCES;
+			printk("tesla detected");
 		}
 	}
 	return read;
