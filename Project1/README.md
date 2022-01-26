@@ -11,10 +11,10 @@ implementations.
 
 ## Manifest
 
--Makefile - used to build the project
--tesla.c - the main C file that makes the kernal module
--tesla.h - Header file for tesla.c
--README.md - this file
+-Makefile: used to build the project
+-tesla.c: the main C file that makes the kernal module
+-tesla.h: Header file for tesla.c
+-README.md: this file
 
 ## Building the project
 
