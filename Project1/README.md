@@ -11,10 +11,10 @@ implementations.
 
 ## Manifest
 
--Makefile: used to build the project
--tesla.c: the main C file that makes the kernal module
--tesla.h: Header file for tesla.c
--README.md: this file
+* Makefile - used to build the project
+* tesla.c - the main C file that makes the kernal module
+* tesla.h - Header file for tesla.c
+* README.md - this file
 
 ## Building the project
 
@@ -120,7 +120,7 @@ but eventually I got it working, so I am happy with how it turned out.
 
 ## Sources Used
 
--In class psuedocode
--Memmove examples from online:
-https://www.geeksforgeeks.org/memmove-in-cc/
-https://www.ibm.com/docs/en/i/7.1?topic=functions-memmove-copy-bytes
+* In class psuedocode
+* Memmove examples from online:
+	* https://www.geeksforgeeks.org/memmove-in-cc/
+	* https://www.ibm.com/docs/en/i/7.1?topic=functions-memmove-copy-bytes
