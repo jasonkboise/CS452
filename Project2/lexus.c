@@ -79,10 +79,12 @@ void free_lexus_list(void) {
 
 /* register a process into the lottery scheduling system */
 void lexus_register(struct lottery_struct lottery){
+	//printk("lottery pid: %lu tickets: %lu \n", lottery.pid, lottery.tickets);
 }
 
 /* unregister a process from the lottery scheduling system */
 void lexus_unregister(struct lottery_struct lottery){
+	printk("passed to unregister \n");
 }
 
 /* executes a context switch: pick a task and dispatch it to the Linux CFS scheduler */
@@ -94,6 +96,19 @@ int lexus_schedule(void *data)
 /* handle ioctl system calls */
 static long lexus_dev_ioctl(struct file *filp, unsigned int ioctl, unsigned long arg)
 {
+	struct lottery_struct lottery_info;
+	if (copy_from_user(&lottery_info, (void *)arg, sizeof(struct lottery_struct)) != 0) {
+		return -EACCES;
+	}
+
+	printk("lottery pid: %lu tickets: %lu \n", lottery_info.pid, lottery_info.tickets);
+
+	if (ioctl == LEXUS_REGISTER) {
+		lexus_register(lottery_info);
+	}
+	else {
+		lexus_unregister(lottery_info);
+	}
 	return 0;
 }
 
