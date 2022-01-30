@@ -119,7 +119,65 @@ void lexus_unregister(struct lottery_struct lottery) {
 /* executes a context switch: pick a task and dispatch it to the Linux CFS scheduler */
 int lexus_schedule(void *data)
 {
+	while(!kthread_should_stop()) {
+		//for looping
+		struct list_head *p, *n;
+    	struct lexus_task_struct *node = NULL;
+		//for checking winner
+		int counter = 0;
+		unsigned long winner = 0;
+		//for random value
+    	int randval = 0;
+		//for setting priority
+		struct sched_param sparam;
+		//for locking/unlocking
+		unsigned long flags;
+		spin_lock_irqsave(&lexus_lock, flags);
+		
+		/* if list is empty, sleep */
+		if (list_empty(&lexus_task_struct.list)) {
+			set_current_state(TASK_INTERRUPTIBLE);
+    		schedule();	/* this function does not take any parameter, call this function will trigger the CFS scheduler to make a new scheduling decision. */
+		}
+
+    	/* producing a random number as the lottery winning number */
+    	get_random_bytes(&randval, sizeof(int)-1);
+    	winner = (randval & 0x7FFFFFFF) % nTickets;
+
+		/* set previous winner to priority 0 */
+		if (lexus_current != NULL) {
+    		sparam.sched_priority=0; 
+    		sched_setscheduler(lexus_current->task, SCHED_NORMAL, &sparam);
+			lexus_current->state = READY;
+		}
+
+		/* loop through list and select winner */
+		list_for_each_safe(p, n, &lexus_task_struct.list) {
+        	node = list_entry(p, struct lexus_task_struct, list);
+			counter += node->tickets;
+			if (counter > winner) {
+				//break out of loop when winner found
+				break;
+			}
+    	}
+		/*set winner to current */
+		lexus_current = node;
+		lexus_current->state = RUNNING;
+
+		/*wake up winning process, set high priority */
+    	wake_up_process(node->task);
+    	sparam.sched_priority=99;
+    	sched_setscheduler(node->task, SCHED_FIFO, &sparam);
+
+		spin_unlock_irqrestore(&lexus_lock, flags);
+
+		/* sleep the process (wait 200 ms) */
+		set_current_state(TASK_INTERRUPTIBLE);
+    	schedule();
+		
+	}
 	return 0;
+
 }
 
 /* handle ioctl system calls */
