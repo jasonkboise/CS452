@@ -79,12 +79,41 @@ void free_lexus_list(void) {
 
 /* register a process into the lottery scheduling system */
 void lexus_register(struct lottery_struct lottery){
-	//printk("lottery pid: %lu tickets: %lu \n", lottery.pid, lottery.tickets);
+
+	struct lexus_task_struct *node = kmalloc(sizeof(lexus_task_struct), GFP_KERNEL);
+
+	/* changes to globals and list, so we need to call lock/unlock */
+	unsigned long flags;
+	spin_lock_irqsave(&lexus_lock, flags);
+	nTickets += lottery.tickets;
+	node->tickets = lottery.tickets;
+	node->pid = lottery.pid;
+	node->task = find_task_by_pid(lottery.pid);
+	node->state = READY;
+	printk("Registering pid: %lu \n", node->pid);
+	list_add(&(node->list), &(lexus_task_struct.list));
+	spin_unlock_irqrestore(&lexus_lock, flags);
 }
 
 /* unregister a process from the lottery scheduling system */
-void lexus_unregister(struct lottery_struct lottery){
-	printk("passed to unregister \n");
+void lexus_unregister(struct lottery_struct lottery) {
+	struct list_head *p, *n;
+    struct lexus_task_struct *node;
+	
+    list_for_each_safe(p, n, &lexus_task_struct.list) {
+        node = list_entry(p, struct lexus_task_struct, list);
+		if (node->pid == lottery.pid) {
+			unsigned long flags;
+			spin_lock_irqsave(&lexus_lock, flags);
+			printk("Unregistering pid: %lu \n", node->pid);
+			list_del(p);
+			kfree(node);
+			lexus_current = NULL;
+			nTickets -= node->tickets;	
+			spin_unlock_irqrestore(&lexus_lock, flags);
+			break;
+		}
+    }
 }
 
 /* executes a context switch: pick a task and dispatch it to the Linux CFS scheduler */
