@@ -5,39 +5,77 @@
 
 ## Overview
 
-Concisely explain what the program does. If this exceeds a couple of
-sentences, you're going too far. Generally you should be pulling this
-right from the project specification. We don't want you to just cut and
-paste, but paraphrase what is stated in the project specification.
+In this assignment, we wrote a Linux kernel module called lexus. This module
+implements a lottery scheduler for processes by maintaining a seperate scheduler
+and dispatching processes to the CFS scheduler when we want them to run.
 
 ## Manifest
 
-A listing of source files and other non-generated files and a brief (one line)
-explanation of the purpose of each file.
+* Makefile - used to build the project
+* lexus.c - the main C file that makess the kernal module implementing lottery scheduling
+* lexus.h - header file for lexus.c that defines structs, functions, etc.
+* lexus-test(1-3).sh - bash shell script files that test the lottery scheduling system
+* README.md - this file
 
 ## Building the project
 
-This section should tell the user how to build your code.  If you are
-delivering a library, where does it need to be installed or how do you use
-it? Is this an executable, if so how can a user get up to speed as fast
-as possible.
+In order to run this project, you must first navigate to the directory
+with all of the files, then run the command:
+
+```
+make
+```
+then, when the build is finished, run the command:
+
+```
+sudo insmod lexus.ko
+```
+
+finally, run you can run a test script by running the command:
+```
+./lexus-test1.sh
+```
 
 ## Features and usage
 
-Summarize the main features of your program. It is also appropriate to
-instruct the user how to use your program.
+The project is a my own implementation of a lottery scheduling system. This
+is accomplished by maintaing a list of processes, each with a certain amount
+of tickets (to give them a priority), and holding a lottery to see which process
+gets some processing time on a one-core CPU system. In order to add a process
+to the lottery system, I had to intercept ioctl() call to check when a process
+wanted to be entered into the CFS, which is the default linux scheduler. However, 
+instead of adding it to the CFS, it is added to my own scheduler first. If the 
+process wins the lottery, I then add it to the CFS with high priority so that it 
+gets processed for a set amount of time. Then after that set amount of time, I
+set the priority of the previous winner back to 0, then hold another lottery,
+and set the next winner to high. It then repeats the process until all processes
+in the lottery scheduler are complete. 
 
 ## Testing
 
-This section should detail how you tested your code. Simply stating "I ran
-it a few times and it seems to work" is not sufficient. Your testing needs to
-be detailed here.
+I debugged this project is much the same way as the first project for this class.
+So I started out by using a bunch of printk() statements to figure out exactly
+what a certain perameter for a function was, if some structs were getting passed
+to register/unregister correctly, etc. Obviously, this meant that my VM ended up
+crashing a bunch of times, as this method still isn't super efficient compared
+to using GDB. But, I still felt like I was making progress using this method, so
+I didn't feel it was super necessary for me to follow the guide on setting it up
+and using it. I will probably end up using it on a future project though.
 
 ## Known Bugs
 
-List known bugs that you weren't able to fix (or ran out of time to fix).
+N/A
 
 ## Reflection and Self Assessment
+
+Now that I have had some time getting used to making a kernel module, I found
+this project to still be challenging, but oddly not as difficult as the first project.
+This is most likely just because I have a better understanding of how to go about
+debugging the code.
+
+
+
+
 
 Discuss the issues you encountered during development and testing. What
 problems did you have? What did you have to research and learn on your
@@ -49,5 +87,5 @@ did the development and testing process go for you?
 
 ## Sources Used
 
-If you used any sources outside of the text book you should list them here. If you looked something up on
-stackoverflow.com and fail to cite it in this section it will be considered plagiarism and be dealt with accordingly. So be safe CITE!
+* Operating Systems: Three Easy Pieces: Chapter 9: Lottery Scheduling
+* 
