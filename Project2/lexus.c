@@ -132,17 +132,19 @@ int lexus_schedule(void *data)
 		struct sched_param sparam;
 		//for locking/unlocking
 		unsigned long flags;
-		spin_lock_irqsave(&lexus_lock, flags);
 		
 		/* if list is empty, sleep */
 		if (list_empty(&lexus_task_struct.list)) {
 			set_current_state(TASK_INTERRUPTIBLE);
     		schedule();	/* this function does not take any parameter, call this function will trigger the CFS scheduler to make a new scheduling decision. */
+			continue;
 		}
 
     	/* producing a random number as the lottery winning number */
     	get_random_bytes(&randval, sizeof(int)-1);
     	winner = (randval & 0x7FFFFFFF) % nTickets;
+
+		spin_lock_irqsave(&lexus_lock, flags);
 
 		/* set previous winner to priority 0 */
 		if (lexus_current != NULL) {
@@ -162,12 +164,12 @@ int lexus_schedule(void *data)
     	}
 		/*set winner to current */
 		lexus_current = node;
-		lexus_current->state = RUNNING;
 
 		/*wake up winning process, set high priority */
-    	wake_up_process(node->task);
+    	wake_up_process(lexus_current->task);
     	sparam.sched_priority=99;
-    	sched_setscheduler(node->task, SCHED_FIFO, &sparam);
+    	sched_setscheduler(lexus_current->task, SCHED_FIFO, &sparam);
+		lexus_current->state = RUNNING;
 
 		spin_unlock_irqrestore(&lexus_lock, flags);
 
