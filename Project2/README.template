@@ -71,21 +71,45 @@ N/A
 Now that I have had some time getting used to making a kernel module, I found
 this project to still be challenging, but oddly not as difficult as the first project.
 This is most likely just because I have a better understanding of how to go about
-debugging the code.
+debugging the code. Also, I found the README provided for the project to very useful
+starting point for pretty much all of the functions.
 
+So as the README suggested, I started by implementing the ioctl() function. I started
+working on the project after our class on Thursday, so I had a pretty good idea of where
+to start for this function. We basically just had to check if the ioctl perameter was
+LEXUS_REGISTER or LEXUS_UNREGISTER, and based on that, pass it to register() or
+unregister(). The only difficult part of this was remember how to properly use
+copy_from_user() for the args perameter to get the lottery_struct. But once I had this
+figured out, I had a lot of printk() statements to make sure it was being properly
+passed to register() and unregister(). 
 
+Register() and unregister() were pretty straightforward. In register() I just
+instatiated a lexus_task_struct, filled it with the info passed in from ioctl(), and
+added that to our global list. And then unregister() was just the opposite, where
+I freed the lexus_task_struct and deleted it from the list when the process was done.
+And of course, I had printk() statements everywhere making sure everything was working
+as intended. I encountered an issue though where removing the module would cause the
+VM to crash. I could not find the reason as to why this happened, but after I finished
+schedule() this seemed to go away, so I assume it had something to do with that.
 
+Schedule() easily caused the most frustration. I started out by basically following
+the psuedo code provided by the textbook. From there, I started adding in lines of
+code from the README to schedule/unschedule the winner/previous winner from the CFS.
+After this was still causing crashing, I realized it wasn't enough. The main thing I
+realized was missing was the while loop that the entire code is suppose to be surrounded
+by, as I remembered that the professor mentioned in class that we want this code to
+keep running forever until the whole list is done. After this point, my code was
+mostly working. However, I was running into an issue where the module would cause my
+VM to crash if I ran a script more than once. To fix this, I realized that I was
+calling spin_lock_irqsave() too early, which lead to issues if I locked it, and then
+the loop was reset if the list was empty. So once I fixed this, my code was working
+completely.
 
-
-Discuss the issues you encountered during development and testing. What
-problems did you have? What did you have to research and learn on your
-own? What kinds of errors did you get? How did you fix them?
-
-What parts of the project did you find challenging? Is there anything that
-finally "clicked" for you in the process of working on this project? How well
-did the development and testing process go for you?
+Overall, this was a challenging, but also interesting project. Learning how the lottery
+system works was cool, so I found programming this not too annoying.
 
 ## Sources Used
 
+* In class whiteboard notes
 * Operating Systems: Three Easy Pieces: Chapter 9: Lottery Scheduling
 * https://www.oreilly.com/library/view/linux-device-drivers/0596000081/ch10s05.html
