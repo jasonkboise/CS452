@@ -31,13 +31,18 @@ int buddy_init(void) {
 		avail[i].kval = i;
 		avail[i].tag = UNUSED;
 	}
+
 	avail[29].next = p;
 	avail[29].prev = p;
 	avail[29].kval = 29;
 	avail[29].tag = UNUSED;
 
+	p->next = &avail[29];
+	p->prev = &avail[29];
+	p->kval = 29;
+	p->tag = FREE;
 
-	return FALSE;
+	return true;
 }
 
 void *buddy_malloc(size_t size)
@@ -61,8 +66,11 @@ void *buddy_malloc(size_t size)
 
 	//everytime you split the big chunk, you need to cast to add a buddy header
 	
+	if (base == NULL) {
+		return NULL;
+	}
 
-	return NULL;
+	
 	//pointer = (char *)pointer + 24 (the size of the header)
 	//return pointer
 
