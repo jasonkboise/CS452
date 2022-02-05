@@ -20,6 +20,23 @@ int buddy_init(void) {
 		tag <- -1;
 	}
 	*/
+
+	base = sbrk(DEFAULT_MAX_MEM_SIZE);
+	struct block_header *p = (struct block_header *)base;
+
+	int i;
+	for(i = 0; i<29; i++) {
+		avail[i].next = &avail[i];
+		avail[i].prev = &avail[i];
+		avail[i].kval = i;
+		avail[i].tag = UNUSED;
+	}
+	avail[29].next = p;
+	avail[29].prev = p;
+	avail[29].kval = 29;
+	avail[29].tag = UNUSED;
+
+
 	return FALSE;
 }
 
