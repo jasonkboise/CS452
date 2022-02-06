@@ -127,7 +127,7 @@ void printBuddyLists(void)
 		}
 		printf("\n");
 	}
-	printf("\n Number of available blocks = %d \n", count);
+	printf("\nNumber of available blocks = %d \n", count);
 }
 
 /* vim: set ts=4: */
