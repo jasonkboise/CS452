@@ -42,7 +42,7 @@ int buddy_init(void) {
 	p->kval = 29;
 	p->tag = FREE;
 
-	return true;
+	return TRUE;
 }
 
 void *buddy_malloc(size_t size)
@@ -66,11 +66,34 @@ void *buddy_malloc(size_t size)
 
 	//everytime you split the big chunk, you need to cast to add a buddy header
 	
+	//return null if init() was not called first
 	if (base == NULL) {
 		return NULL;
 	}
+	int i;
+	struct block_header *p;
+	int lgsize = 0;
+	//int sizeSave = size;
 
-	
+	//calculate lgsize
+	size=size-1;
+    while(size>0){
+        size=size>>1;
+        lgsize++;
+    }
+
+	if (lgsize > 29) return NULL;
+
+	//look for available block, starting from lgsize
+	for (i = lgsize; i<30; i++) {
+		p = &avail[i];
+		while (p->next != p && p->next->tag != UNUSED) {
+			p = p->next;
+			if (p->tag == FREE) break;
+		}
+	}
+
+	return NULL;
 	//pointer = (char *)pointer + 24 (the size of the header)
 	//return pointer
 
@@ -84,6 +107,27 @@ void buddy_free(void *ptr)
 
 void printBuddyLists(void)
 {
+	int i, count;
+	struct block_header *p, *save;
+	count = 0;
+	for (i = 0; i < 30; i++) {
+		p = &avail[i];
+		save = p;
+		printf("List %d: head = %p", i, p);
+		while (1) {
+			p = p->next;
+			if (p == save) {
+				printf(" --> head = %p", p);
+				break;
+			}
+			else {
+				printf(" --> [tag=%d,kval=%d,addr=%p]", p->tag, p->kval, p);
+				count++;
+			}
+		}
+		printf("\n");
+	}
+	printf("\n Number of available blocks = %d \n", count);
 }
 
 /* vim: set ts=4: */
