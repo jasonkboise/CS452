@@ -72,7 +72,7 @@ void *buddy_malloc(size_t size)
 	}
 	
 	int i, j, remaining;
-	struct block_header *p, *p2, *p3;
+	struct block_header *p, *p2, *p3, new;
 	int lgsize = 0;
 	int free = FALSE;
 	//int sizeSave = size;
@@ -102,10 +102,10 @@ void *buddy_malloc(size_t size)
 	}
 	if (i == 30) return NULL;
 
-	//save avail number
+	//save avail level
 	j = i;
 
-	//finding how much memory is in a block at that avail level
+	//finding how much memory is in a block at found avail level
 	remaining = DEFAULT_MAX_MEM_SIZE;
 	while (i < 29) {
 		remaining = remaining >> 1;
@@ -120,6 +120,26 @@ void *buddy_malloc(size_t size)
 		//adjust left node's header, and add new header to right node
 		//add both nodes to avail[j]
 
+
+		p2 = p->prev;
+		p3 = p->next;
+		//if it is the only block in the list
+		if (p->next == p2) {
+			p2->next = p2;
+			p2->prev = p2;
+		}
+		//if it is not the only block
+		else {
+			p2->next = p3;
+			p3->prev = p2;
+		}
+		remaining = remaining >> 1;
+		j--;
+		
+		new = (struct block_header *)(base + remaining);
+		p->kval = j;
+		new->kval = j;
+		new->tag = FREE;
 		
 	}
 
