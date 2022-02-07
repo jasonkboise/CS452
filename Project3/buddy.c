@@ -70,11 +70,15 @@ void *buddy_malloc(size_t size)
 	if (base == NULL) {
 		return NULL;
 	}
-	int i;
-	struct block_header *p;
+	
+	int i, j, remaining;
+	struct block_header *p, *p2, *p3;
 	int lgsize = 0;
+	int free = FALSE;
 	//int sizeSave = size;
 
+	//add size of header
+	size += sizeof(struct block_header);
 	//calculate lgsize
 	size=size-1;
     while(size>0){
@@ -85,13 +89,42 @@ void *buddy_malloc(size_t size)
 	if (lgsize > 29) return NULL;
 
 	//look for available block, starting from lgsize
-	for (i = lgsize; i<30; i++) {
+	for (i = lgsize; i<31; i++) {
 		p = &avail[i];
-		while (p->next != p && p->next->tag != UNUSED) {
+		while (p->next->tag != UNUSED) {
 			p = p->next;
-			if (p->tag == FREE) break;
+			if (p->tag == FREE) {
+				free = TRUE;
+				break;
+			}
 		}
+		if (free) break;
 	}
+	if (i == 30) return NULL;
+
+	//save avail number
+	j = i;
+
+	//finding how much memory is in a block at that avail level
+	remaining = DEFAULT_MAX_MEM_SIZE;
+	while (i < 29) {
+		remaining = remaining >> 1;
+		i++;
+	}
+
+	while (lgsize < j) {
+		//remove node p from avail[j]
+		//divide remaining by half
+		//decrement j
+		//split the node (start of the left node is 'base', and start of right node address is 'base + remaining')
+		//adjust left node's header, and add new header to right node
+		//add both nodes to avail[j]
+
+		
+	}
+
+	//lgsize 17
+	//avail[19]
 
 	return NULL;
 	//pointer = (char *)pointer + 24 (the size of the header)
@@ -122,7 +155,7 @@ void printBuddyLists(void)
 			}
 			else {
 				printf(" --> [tag=%d,kval=%d,addr=%p]", p->tag, p->kval, p);
-				count++;
+				if (p->tag == FREE) count++;
 			}
 		}
 		printf("\n");
