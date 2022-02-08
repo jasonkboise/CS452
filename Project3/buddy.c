@@ -46,26 +46,7 @@ int buddy_init(void) {
 }
 
 void *buddy_malloc(size_t size)
-{
-	//first add the size of the header to the amount they want to allocate
-	//int realsize = (char *)size + 24 (maybe?)
-	//this is ACTUALLY what you are trying to allocate
-
-	//start searching from lgsize
-	/*
-	for (i = lgsize; i <29; i++) {
-		if list not empty (then there a block free to use!)
-			break;
-	}
-	while (j > lgsize) {
-		...
-		return something;
-	}
-	return NULL;
-	*/
-
-	//everytime you split the big chunk, you need to cast to add a buddy header
-	
+{	
 	//return null if init() was not called first
 	if (base == NULL) {
 		return NULL;
@@ -174,11 +155,9 @@ void *buddy_malloc(size_t size)
 	}
 
 	//add the size of the block_header to p to move the pointer past the header
-	ret = (void *)p + sizeof(struct block_header);
+	ret = (void *)(p + sizeof(struct block_header));
 
 	return ret;
-	//pointer = (char *)pointer + 24 (the size of the header)
-	//return pointer
 
 }
 
