@@ -72,7 +72,7 @@ void *buddy_malloc(size_t size)
 	}
 	
 	int i, j, remaining;
-	struct block_header *p, *p2, *p3, new;
+	struct block_header *p, *p2, *p3, *new;
 	int lgsize = 0;
 	int free = FALSE;
 	void *ret;
@@ -155,7 +155,7 @@ void *buddy_malloc(size_t size)
 		new->tag = FREE;
 
 		/* now add 'new' to the next list */
-		p2 = &avail[j]
+		p2 = &avail[j];
 		p3 = p2->next;
 		//if it is an empty list
 		if (p2->next == p2) {
