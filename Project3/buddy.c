@@ -75,7 +75,7 @@ void *buddy_malloc(size_t size)
 	struct block_header *p, *p2, *p3, new;
 	int lgsize = 0;
 	int free = FALSE;
-	//int sizeSave = size;
+	void *ret;
 
 	//add size of header
 	size += sizeof(struct block_header);
@@ -86,10 +86,11 @@ void *buddy_malloc(size_t size)
         lgsize++;
     }
 
+	//if requesting too much memory, return NULL
 	if (lgsize > 29) return NULL;
 
 	//look for available block, starting from lgsize
-	for (i = lgsize; i<31; i++) {
+	for (i = lgsize; i<30; i++) {
 		p = &avail[i];
 		while (p->next->tag != UNUSED) {
 			p = p->next;
@@ -100,7 +101,8 @@ void *buddy_malloc(size_t size)
 		}
 		if (free) break;
 	}
-	if (i == 30) return NULL;
+	//if nothing found return NULL
+	if (!free) return NULL;
 
 	//save avail level
 	j = i;
@@ -120,33 +122,61 @@ void *buddy_malloc(size_t size)
 		//adjust left node's header, and add new header to right node
 		//add both nodes to avail[j]
 
-
+		/* remove node p from avail[j] */
 		p2 = p->prev;
 		p3 = p->next;
-		//if it is the only block in the list
-		if (p->next == p2) {
-			p2->next = p2;
-			p2->prev = p2;
+		if (p2 != NULL && p3 != NULL) {
+			//if it is the only block in the list
+			if (p->next == p2) {
+				p2->next = p2;
+				p2->prev = p2;
+			}
+			//if it is not the only block
+			else {
+				p2->next = p3;
+				p3->prev = p2;
+			}
+
+			//remove p from all lists, as it is being used.
+			p->next = NULL;
+			p->prev = NULL;
+			p->tag = RESERVED;
 		}
-		//if it is not the only block
-		else {
-			p2->next = p3;
-			p3->prev = p2;
-		}
+
 		remaining = remaining >> 1;
 		j--;
 		
+		//make new header half with into p to split it.
 		new = (struct block_header *)(base + remaining);
+
+		//adjust p and new's kval
 		p->kval = j;
 		new->kval = j;
 		new->tag = FREE;
-		
+
+		/* now add 'new' to the next list */
+		p2 = &avail[j]
+		p3 = p2->next;
+		//if it is an empty list
+		if (p2->next == p2) {
+			p2->next = new;
+			p2->prev = new;
+			new->next = p2;
+			new->prev = p2;
+		}
+		//if it is not an empty list
+		else {
+			p2->next = new;
+			new->prev = p2;
+			new->next = p3;
+			p3->prev = new;
+		}
 	}
 
-	//lgsize 17
-	//avail[19]
+	//add the size of the block_header to p to move the pointer past the header
+	ret = (void *)p + sizeof(struct block_header);
 
-	return NULL;
+	return ret;
 	//pointer = (char *)pointer + 24 (the size of the header)
 	//return pointer
 
