@@ -96,12 +96,6 @@ void *buddy_malloc(size_t size)
 	}
 
 	while (lgsize < j) {
-		//remove node p from avail[j]
-		//divide remaining by half
-		//decrement j
-		//split the node (start of the left node is 'base', and start of right node address is 'base + remaining')
-		//adjust left node's header, and add new header to right node
-		//add both nodes to avail[j]
 
 		/* remove node p from avail[j] */
 		if (p->next != NULL && p->prev != NULL) {
@@ -167,6 +161,8 @@ void buddy_free(void *ptr)
 	short lgsize;
 	p = (struct header_block *)(ptr - sizeof(struct block_header));
 	lgsize = p->kval;
+
+	
 	
 }
 
