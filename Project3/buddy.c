@@ -104,9 +104,9 @@ void *buddy_malloc(size_t size)
 		//add both nodes to avail[j]
 
 		/* remove node p from avail[j] */
-		p2 = p->prev;
-		p3 = p->next;
-		if (p2 != NULL && p3 != NULL) {
+		if (p->next != NULL && p->prev != NULL) {
+			p2 = p->prev;
+			p3 = p->next;
 			//if it is the only block in the list
 			if (p->next == p2) {
 				p2->next = p2;
@@ -163,8 +163,9 @@ void *buddy_malloc(size_t size)
 
 void buddy_free(void *ptr) 
 {
-	//first do pointer = (char *)ptr - 24;
-	//then start freeing from pointer
+	struct header_block *p;
+	p = (struct header_block *)(ptr - sizeof(struct block_header));
+
 }
 
 void printBuddyLists(void)
