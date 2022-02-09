@@ -164,8 +164,10 @@ void *buddy_malloc(size_t size)
 void buddy_free(void *ptr) 
 {
 	struct header_block *p;
+	short lgsize;
 	p = (struct header_block *)(ptr - sizeof(struct block_header));
-
+	lgsize = p->kval;
+	
 }
 
 void printBuddyLists(void)
