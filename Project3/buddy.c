@@ -149,7 +149,7 @@ void *buddy_malloc(size_t size)
 	}
 
 	//add the size of the block_header to p to move the pointer past the header
-	ret = (void *)(p + sizeof(struct block_header));
+	ret = (void *)((char *)p + sizeof(struct block_header));
 
 	return ret;
 
@@ -157,12 +157,43 @@ void *buddy_malloc(size_t size)
 
 void buddy_free(void *ptr) 
 {
-	struct header_block *p;
-	short lgsize;
-	p = (struct header_block *)(ptr - sizeof(struct block_header));
-	lgsize = p->kval;
+	struct block_header *p1;
+	struct block_header *p2;
+	p1 = (struct block_header *) ((char *)ptr - sizeof(struct block_header));
+	printf("p1 address: %p\n", p1);
+	unsigned long long ull = 1;
 
+	//find buddy address
+	p2 = (struct block_header *)((unsigned long long)(p1) ^ (ull << (p1->kval)));
+	printf("p2 address: %p\n", p2);
 	
+	while (p2->tag == FREE && p2->kval == p1->kval) {
+		//if p1 is on the right side, switch p1 and p2 to make it on the left.
+		printf("p1 address is: %p\n",p1);
+		if (p1 > p2) {
+			struct block_header *temp;
+			temp = p1;
+			p1 = p2;
+			p2 = temp;
+			printf("FLIPPED!!!! p1 is now: %p, and p2 is now: %p\n", p1, p2);
+		}
+		//remove p2 from the list
+		struct block_header *temp1, *temp2;
+		temp1 = p2->prev;
+		temp2 = p2->next;
+		temp1->next = temp2;
+		temp2->prev = temp1;
+		printf("p2 (%p) is removed.\n", p2);
+
+		//increment p1's kval to move up the list and find the next buddy
+		p1->kval = (short)p1->kval + 1;
+		printf("p1's kval incremented. Is now: %d\n", p1->kval);
+
+		//find next buddy and set the address to p2
+		p2 = (struct block_header *)((unsigned long long)(p1) ^ (ull << (p1->kval)));
+		
+		printf("p2 new address is: %p, p2->tag = %d\n", p2, p2->tag);
+	}
 	
 }
 
