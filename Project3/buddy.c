@@ -5,21 +5,6 @@
 #include "buddy.h"
 
 int buddy_init(void) { 
-	//when you initalize, you will start with just one big chunk of memory of DEFAULT_MEM_SIZE,
-	//and initialize a lot of empty lists, which will hold smaller chunks
-	//then split it when the user uses buddy_malloc for a smaller size than the large chunk
-
-	/*
-	base = sbrk();
-	
-	int i;
-	for (i = 0; i< 29; i++) {
-		next <- & avai[i];
-		prev <- & avai[i];
-		kval <- i;
-		tag <- -1;
-	}
-	*/
 
 	base = sbrk(DEFAULT_MAX_MEM_SIZE);
 	struct block_header *p = (struct block_header *)base;
@@ -85,6 +70,18 @@ void *buddy_malloc(size_t size)
 	//if nothing found return NULL
 	if (!free) return NULL;
 
+	//if the free block is at avail[lgsize], just return that block
+	if (p->kval == lgsize) {
+		struct block_header *t1, *t2;
+		p->tag = RESERVED;
+		t1 = p->next;
+		t2 = p->prev;
+		t1->prev = t2;
+		t2->next = t1;
+		ret = (void *)((char *)p + sizeof(struct block_header));
+		return ret;
+	}
+
 	//save avail level
 	j = i;
 
@@ -96,21 +93,13 @@ void *buddy_malloc(size_t size)
 	}
 
 	while (lgsize < j) {
-
 		/* remove node p from avail[j] */
 		if (p->next != NULL && p->prev != NULL) {
 			p2 = p->prev;
 			p3 = p->next;
-			//if it is the only block in the list
-			if (p->next == p2) {
-				p2->next = p2;
-				p2->prev = p2;
-			}
-			//if it is not the only block
-			else {
-				p2->next = p3;
-				p3->prev = p2;
-			}
+			
+			p2->next = p3;
+			p3->prev = p2;
 
 			//remove p from all lists, as it is being used.
 			p->next = NULL;
@@ -132,20 +121,12 @@ void *buddy_malloc(size_t size)
 		/* now add 'new' to the next list */
 		p2 = &avail[j];
 		p3 = p2->next;
-		//if it is an empty list
-		if (p2->next == p2) {
-			p2->next = new;
-			p2->prev = new;
-			new->next = p2;
-			new->prev = p2;
-		}
-		//if it is not an empty list
-		else {
-			p2->next = new;
-			new->prev = p2;
-			new->next = p3;
-			p3->prev = new;
-		}
+		
+		p2->next = new;
+		new->prev = p2;
+		new->next = p3;
+		p3->prev = new;
+		
 	}
 
 	//add the size of the block_header to p to move the pointer past the header
@@ -163,38 +144,40 @@ void buddy_free(void *ptr)
 	printf("p1 address: %p\n", p1);
 	unsigned long long ull = 1;
 
+	long x, y;
+	x = (long)p1 - (long)base;
+
 	//find buddy address
-	p2 = (struct block_header *)((unsigned long long)(p1) ^ (ull << (p1->kval)));
-	printf("p2 address: %p\n", p2);
+	y =(unsigned long long)(x) ^ (ull << (p1->kval));
+	p2 = (struct block_header *)((long)p1 + (long)y);
 	
 	while (p2->tag == FREE && p2->kval == p1->kval) {
-		//if p1 is on the right side, switch p1 and p2 to make it on the left.
-		printf("p1 address is: %p\n",p1);
-		if (p1 > p2) {
-			struct block_header *temp;
-			temp = p1;
-			p1 = p2;
-			p2 = temp;
-			printf("FLIPPED!!!! p1 is now: %p, and p2 is now: %p\n", p1, p2);
-		}
+		
 		//remove p2 from the list
 		struct block_header *temp1, *temp2;
 		temp1 = p2->prev;
 		temp2 = p2->next;
 		temp1->next = temp2;
 		temp2->prev = temp1;
-		printf("p2 (%p) is removed.\n", p2);
 
 		//increment p1's kval to move up the list and find the next buddy
 		p1->kval = (short)p1->kval + 1;
-		printf("p1's kval incremented. Is now: %d\n", p1->kval);
 
-		//find next buddy and set the address to p2
-		p2 = (struct block_header *)((unsigned long long)(p1) ^ (ull << (p1->kval)));
-		
-		printf("p2 new address is: %p, p2->tag = %d\n", p2, p2->tag);
+		//find buddy address
+		y =(unsigned long long)(x) ^ (ull << (p1->kval));
+		p2 = (struct block_header *)((long)p1 + (long)y);
+	}
+
+	if (p1 > p2 && p1->kval != 29) {
+		p1 = p2;
 	}
 	
+	p1->tag = FREE;
+	struct block_header *temp = avail[p1->kval].next;
+	avail[p1->kval].next = p1;
+	temp->prev = p1;
+	p1->prev = &avail[p1->kval];
+	p1->next = temp;
 }
 
 void printBuddyLists(void)
