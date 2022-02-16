@@ -141,7 +141,7 @@ void buddy_free(void *ptr)
 	struct block_header *p1;
 	struct block_header *p2;
 	p1 = (struct block_header *) ((char *)ptr - sizeof(struct block_header));
-	printf("p1 address: %p\n", p1);
+	//printf("p1 address: %p\n", p1);
 	unsigned long long ull = 1;
 
 	long x, y;
