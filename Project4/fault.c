@@ -44,8 +44,37 @@ int is_entire_table_free(unsigned long table){
  * */
 
 int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr_t fault_addr, u32 error_code) {
-	printk("Page fault!\n");
-    return -1;
+
+	if (is_valid_address(infiniti_vma, fault_addr)==0)
+	return -1;
+
+	if (error_code == SEGV_ACCERR)
+	return -1;
+
+	unsigned long pml4_table, pdp_table, pd_table, pt_table;
+	unsigned long *pml4e, *pdpte, *pde, *pte;
+	unsigned long cr3;
+
+	cr3 = get_cr3();
+
+	pml4_table = __va(cr3 & 0x000FFFFFFFFFF000);
+	pml4e = pml4_table + ((fault_addr>>39)&0x01ff)<<3;
+	
+	if (pml4e & 0x1) {
+
+	}
+	else {
+		uintptr_t kernel_addr = 0;
+		kernel_addr = (uintptr_t)get_zeroed_page(GFP_KERNEL);
+		if (!kernel_addr) {
+			printk(KERN_INFO "failed to allocate one page\n");
+			return -ENOMEM;
+		}
+		pml4e = pml4e | 0x7;
+		pml4e = __pa(kernel_addr);
+	}
+
+    return 0;
 }
 
 /* this function takes a user VA and free its PA as well as its kernel va. */
