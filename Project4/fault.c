@@ -56,11 +56,15 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 	unsigned long cr3;
 
 	cr3 = get_cr3();
+	printk("cr3 = %lu\n", cr3);
 
-	pml4_table = __va(cr3 & 0x000FFFFFFFFFF000);
-	pml4e = pml4_table + ((fault_addr>>39)&0x01ff)<<3;
+	pml4_table = (unsigned long)__va(cr3 & 0x000FFFFFFFFFF000);
+	pml4e = (unsigned long *)(pml4_table + (unsigned long)(((fault_addr >> 39) & 0x01ff) << 3)); // (47:39 for PML4e)
+
+	printk("pml4_table = %lu\n", pml4_table);
+	printk("*pml4e = %lu \n", *pml4e);
 	
-	if (pml4e & 0x1) {
+	if (*pml4e & 0x1) {
 
 	}
 	else {
@@ -70,11 +74,72 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 			printk(KERN_INFO "failed to allocate one page\n");
 			return -ENOMEM;
 		}
-		pml4e = pml4e | 0x7;
-		pml4e = __pa(kernel_addr);
+		*pml4e = (unsigned long)((unsigned long)*pml4e | 0x7);
+		*pml4e = (unsigned long)(*pml4e | ((unsigned long)__pa(kernel_addr) & (unsigned long)0xffffffffff000));
 	}
 
-    return 0;
+	pdp_table = (unsigned long)__va(*pml4e & 0x000FFFFFFFFFF000);
+	pdpte = (unsigned long *)(pdp_table + (unsigned long)(((fault_addr>>30)&0x01ff)<<3));
+
+	printk("pdp_table = %lu\n", pdp_table);
+	printk("*pdpte = %lu \n", *pdpte);
+
+	if (*pdpte & 0x1) {
+
+	}
+	else {
+		uintptr_t kernel_addr = 0;
+		kernel_addr = (uintptr_t)get_zeroed_page(GFP_KERNEL);
+		if (!kernel_addr) {
+			printk(KERN_INFO "failed to allocate one page\n");
+			return -ENOMEM;
+		}
+		*pdpte = (unsigned long)((unsigned long)*pdpte | 0x7);
+		*pdpte = (unsigned long)(*pdpte | ((unsigned long)__pa(kernel_addr) & (unsigned long)0xffffffffff000));
+	}
+
+	pd_table = (unsigned long)__va(*pdpte & 0x000FFFFFFFFFF000);
+	pde = (unsigned long *)(pd_table + (unsigned long)(((fault_addr>>21)&0x01ff)<<3));
+
+	printk("pd_table = %lu\n", pd_table);
+	printk("*pde = %lu \n", *pde);
+
+	if (*pde & 0x1) {
+
+	}
+	else {
+		uintptr_t kernel_addr = 0;
+		kernel_addr = (uintptr_t)get_zeroed_page(GFP_KERNEL);
+		if (!kernel_addr) {
+			printk(KERN_INFO "failed to allocate one page\n");
+			return -ENOMEM;
+		}
+		*pde = (unsigned long)((unsigned long)*pde | 0x7);
+		*pde = (unsigned long)(*pde | ((unsigned long)__pa(kernel_addr) & (unsigned long)0xffffffffff000));
+	}
+
+	pt_table = (unsigned long)__va(*pde & 0x000FFFFFFFFFF000);
+	pte = (unsigned long *)(pt_table + (unsigned long)(((fault_addr>>12)&0x01ff)<<3));
+
+	printk("pt_table = %lu\n", pt_table);
+	printk("*pte = %lu \n", *pte);
+
+	if (*pte & 0x1) {
+
+	}
+	else {
+		uintptr_t kernel_addr = 0;
+		kernel_addr = (uintptr_t)get_zeroed_page(GFP_KERNEL);
+		if (!kernel_addr) {
+			printk(KERN_INFO "failed to allocate one page\n");
+			return -ENOMEM;
+		}
+		*pte = (unsigned long)((unsigned long)*pte | 0x7);
+		*pte = (unsigned long)(*pte | ((unsigned long)__pa(kernel_addr) & (unsigned long)0xffffffffff000));
+	}
+
+	return 0;
+	
 }
 
 /* this function takes a user VA and free its PA as well as its kernel va. */
