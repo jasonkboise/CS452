@@ -45,24 +45,20 @@ int is_entire_table_free(unsigned long table){
 
 int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr_t fault_addr, u32 error_code) {
 
+	unsigned long pml4_table, pdp_table, pd_table, pt_table;
+	unsigned long *pml4e, *pdpte, *pde, *pte;
+	unsigned long cr3;
+
 	if (is_valid_address(infiniti_vma, fault_addr)==0)
 	return -1;
 
 	if (error_code == SEGV_ACCERR)
 	return -1;
 
-	unsigned long pml4_table, pdp_table, pd_table, pt_table;
-	unsigned long *pml4e, *pdpte, *pde, *pte;
-	unsigned long cr3;
-
 	cr3 = get_cr3();
-	printk("cr3 = %lu\n", cr3);
 
 	pml4_table = (unsigned long)__va(cr3 & 0x000FFFFFFFFFF000);
-	pml4e = (unsigned long *)(pml4_table + (unsigned long)(((fault_addr >> 39) & 0x01ff) << 3)); // (47:39 for PML4e)
-
-	printk("pml4_table = %lu\n", pml4_table);
-	printk("*pml4e = %lu \n", *pml4e);
+	pml4e = (unsigned long *)(pml4_table + (unsigned long)(((fault_addr >> 39) & 0x01ff) << 3));
 	
 	if (*pml4e & 0x1) {
 
@@ -81,9 +77,6 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 	pdp_table = (unsigned long)__va(*pml4e & 0x000FFFFFFFFFF000);
 	pdpte = (unsigned long *)(pdp_table + (unsigned long)(((fault_addr>>30)&0x01ff)<<3));
 
-	printk("pdp_table = %lu\n", pdp_table);
-	printk("*pdpte = %lu \n", *pdpte);
-
 	if (*pdpte & 0x1) {
 
 	}
@@ -101,9 +94,6 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 	pd_table = (unsigned long)__va(*pdpte & 0x000FFFFFFFFFF000);
 	pde = (unsigned long *)(pd_table + (unsigned long)(((fault_addr>>21)&0x01ff)<<3));
 
-	printk("pd_table = %lu\n", pd_table);
-	printk("*pde = %lu \n", *pde);
-
 	if (*pde & 0x1) {
 
 	}
@@ -120,9 +110,6 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 
 	pt_table = (unsigned long)__va(*pde & 0x000FFFFFFFFFF000);
 	pte = (unsigned long *)(pt_table + (unsigned long)(((fault_addr>>12)&0x01ff)<<3));
-
-	printk("pt_table = %lu\n", pt_table);
-	printk("*pte = %lu \n", *pte);
 
 	if (*pte & 0x1) {
 
@@ -144,6 +131,58 @@ int infiniti_do_page_fault(struct infiniti_vm_area_struct *infiniti_vma, uintptr
 
 /* this function takes a user VA and free its PA as well as its kernel va. */
 void infiniti_free_pa(uintptr_t user_addr){
+
+	unsigned long pml4_table, pdp_table, pd_table, pt_table;
+	unsigned long *pml4e, *pdpte, *pde, *pte;
+	unsigned long cr3;
+
+	uintptr_t kernel_addr;
+
+	cr3 = get_cr3();
+
+	pml4_table = (unsigned long)__va(cr3 & 0x000FFFFFFFFFF000);
+	pml4e = (unsigned long *)(pml4_table + (unsigned long)(((fault_addr >> 39) & 0x01ff) << 3));
+
+	if (*pml4e & 0x1) {
+
+	}
+	else {
+		return;
+	}
+
+	pdp_table = (unsigned long)__va(*pml4e & 0x000FFFFFFFFFF000);
+	pdpte = (unsigned long *)(pdp_table + (unsigned long)(((fault_addr>>30)&0x01ff)<<3));
+
+	if (*pdpte & 0x1) {
+
+	}
+	else {
+		return;
+	}
+
+	pd_table = (unsigned long)__va(*pdpte & 0x000FFFFFFFFFF000);
+	pde = (unsigned long *)(pd_table + (unsigned long)(((fault_addr>>21)&0x01ff)<<3));
+
+	if (*pde & 0x1) {
+
+	}
+	else {
+		return;
+	}
+
+	pt_table = (unsigned long)__va(*pde & 0x000FFFFFFFFFF000);
+	pte = (unsigned long *)(pt_table + (unsigned long)(((fault_addr>>12)&0x01ff)<<3));
+
+	if (*pte & 0x1) {
+
+	}
+	else {
+		return;
+	}
+
+	kernel_addr = __va(*pte & 0x000ffffffffff000) + (user_addr & 0xfff);
+	free_page(kernel_addr);
+
 	return;
 }
 
