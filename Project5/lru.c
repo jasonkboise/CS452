@@ -30,7 +30,7 @@ int LRUCacheGet(LRUCache* obj, int key) {
     else {
         //hash[key] is the only thing in the list, no need to move
         if (obj->head == obj->tail) {
-            
+
         }
         //hash[key] is at front of list, needs to go to back
         else if (obj->head == obj->hash[key]) {
@@ -84,22 +84,51 @@ void LRUCachePut(LRUCache* obj, int key, int value) {
     else {
         //not found, so you need to make a new node and
         //add it to the hash, also increment size
-        obj->size++;
+
         struct myListNode *node = (struct myListNode*)malloc(sizeof(struct myListNode));
         node->key = key;
         node->value = value;
-        if (obj->tail == NULL) {
-            obj->tail = node;
-            obj->head = node;
-            obj->tail->next = NULL;
-            obj->tail->prev = NULL;
+        node->next = NULL;
+        node->prev = NULL;
+
+        if (obj->size == obj->capacity) {
+            struct myListNode *remove = obj->head;
+            if (obj->head == obj->tail) {
+                obj->head = node;
+                obj->tail = node;
+                obj->hash[remove->key] = NULL;
+                free(remove);
+            }
+            else {
+                //remove the head
+                obj->head->next->prev = NULL;
+                obj->head = obj->head->next;
+                obj->hash[remove->key] = NULL;
+                free(remove);
+                //add node to tail
+                obj->tail->next = node;
+                node->prev = obj->tail;
+                obj->tail = node;
+            }
         }
         else {
-            obj->tail->next = node;
-            node->prev = obj->tail;
-            obj->tail = node;
+            obj->size++;
+            if (obj->tail == NULL) {
+                obj->tail = node;
+                obj->head = node;
+                obj->tail->next = NULL;
+                obj->tail->prev = NULL;
+            }
+            else {
+                obj->tail->next = node;
+                node->prev = obj->tail;
+                obj->tail = node;
+            }
+            
         }
         obj->hash[key] = node;
+
+        
     }
 }
 
