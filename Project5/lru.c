@@ -10,7 +10,17 @@
 #include <stdlib.h>
 #include "lru.h"
 
+LRUCache *cache;
+
 LRUCache* LRUCacheCreate(int capacity) {
+    cache = (LRUCache*)malloc(sizeof(LRUCache));
+    cache->size = 0;
+    cache->capacity = capacity;
+    struct myListNode *hashList = malloc(sizeof(struct myListNode) * 10000);
+    cache->head = NULL;
+    cache->tail = NULL;
+    cache->head = hashList;
+    return cache;
 }
 
 int LRUCacheGet(LRUCache* obj, int key) {

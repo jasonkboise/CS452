@@ -1,6 +1,6 @@
 CC = gcc
 AR = ar
-CFLAGS = 
+CFLAGS = -g
 
 LIB_OBJS = lru.a
 
