@@ -28,12 +28,16 @@ int LRUCacheGet(LRUCache* obj, int key) {
         return -1;
     }
     else {
+        //hash[key] is the only thing in the list, no need to move
+        if (obj->head == obj->tail) {
+            
+        }
         //hash[key] is at front of list, needs to go to back
-        if (obj->head == obj->hash[key]) {
+        else if (obj->head == obj->hash[key]) {
+            //make node after head's prev point to NULL
+            obj->head->next->prev = NULL;
             //move head pointer to next node
-            obj->head = obj->hash[key]->next;
-            //make new head's prev point to NULL
-            obj->hash[key]->next->prev = NULL;
+            obj->head = obj->head->next;
             //make the tail's next point to hash[key]
             obj->tail->next = obj->hash[key];
             //make hash[key]'s prev point to the current tail
@@ -70,6 +74,33 @@ int LRUCacheGet(LRUCache* obj, int key) {
 }
 
 void LRUCachePut(LRUCache* obj, int key, int value) {
+    //check if the key is already in the hash
+    int check = LRUCacheGet(obj, key);
+    if (check != -1) {
+        //hash[key] is already in the list. Was moved to the back.
+        //now you just need to update the value.
+        obj->hash[key]->value = value;
+    }
+    else {
+        //not found, so you need to make a new node and
+        //add it to the hash, also increment size
+        obj->size++;
+        struct myListNode *node = (struct myListNode*)malloc(sizeof(struct myListNode));
+        node->key = key;
+        node->value = value;
+        if (obj->tail == NULL) {
+            obj->tail = node;
+            obj->head = node;
+            obj->tail->next = NULL;
+            obj->tail->prev = NULL;
+        }
+        else {
+            obj->tail->next = node;
+            node->prev = obj->tail;
+            obj->tail = node;
+        }
+        obj->hash[key] = node;
+    }
 }
 
 void LRUCacheFree(LRUCache* obj) {

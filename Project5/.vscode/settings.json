@@ -1,0 +1,10 @@
+{
+    "makefile.extensionOutputFolder": "./.vscode",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/cs452/Documents/CS452/CS452/Project5",
+            "binaryPath": "/home/cs452/Documents/CS452/CS452/Project5/lru-test1",
+            "binaryArgs": []
+        }
+    ]
+}
