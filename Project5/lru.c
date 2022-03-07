@@ -146,9 +146,11 @@ void LRUCacheFree(LRUCache* obj) {
     if (curr != NULL) {
         while(curr->next != NULL) {
             struct myListNode *next = curr->next;
+            obj->hash[curr->key] = NULL;
             free(curr);
             curr = next;
         }
+        obj->hash[curr->key] = NULL;
         free(curr);
     }
     free(obj);
