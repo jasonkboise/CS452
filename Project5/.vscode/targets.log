@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Thu Mar  3 21:38:58 2022
+# Make data base, printed on Mon Mar  7 13:39:49 2022
 
 # Variables
 
@@ -57,7 +57,7 @@ LESSOPEN = ||/usr/bin/lesspipe.sh %s
 # environment
 VSCODE_CWD = /home/cs452
 # environment
-SSH_CONNECTION = 192.168.149.1 53976 192.168.149.132 22
+SSH_CONNECTION = 192.168.149.1 61071 192.168.149.132 22
 # environment
 PATH = /home/cs452/.vscode-server/bin/f80445acd5a3dadef24aa209168452a3d97cc326/bin/remote-cli:/usr/lib64/qt-3.3/bin:/home/cs452/perl5/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/cs452/.local/bin:/home/cs452/bin
 # makefile (from `Makefile', line 5)
@@ -87,7 +87,7 @@ OBJS = lru-test1 lru-test2 lru-test3 lru-test4 lru-test5 lru-test6 lru-test7
 # environment
 PWD = /home/cs452/Documents/CS452/CS452/Project5
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-7882575e-b2a2-40aa-8271-51122bca943e.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-6bade130-9a37-4763-8865-0a6350faa3ae.sock
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -125,7 +125,7 @@ SHLVL = 5
 # makefile (from `Makefile', line 1)
 CC = gcc
 # environment
-XDG_SESSION_ID = 7
+XDG_SESSION_ID = 1
 # environment
 USER = cs452
 # environment
@@ -143,7 +143,7 @@ MAKEFLAGS = Rrqp
 # environment
 MFLAGS = -Rrqp
 # environment
-SSH_CLIENT = 192.168.149.1 53976 22
+SSH_CLIENT = 192.168.149.1 61071 22
 # environment
 MAIL = /var/spool/mail/cs452
 # automatic
@@ -290,7 +290,7 @@ lru-test2:
 # Not a target:
 lru.c:
 #  Implicit rule search has been done.
-#  Last modified 2022-03-03 21:34:43.016027418
+#  Last modified 2022-03-03 22:40:30.848289599
 #  File has been updated.
 #  Successfully updated.
 
@@ -346,6 +346,6 @@ lru-test3:
 
 # strcache hash-table stats:
 # Load=38/8192=0%, Rehash=0, Collisions=1/59=2%
-# Finished Make data base on Thu Mar  3 21:38:58 2022
+# Finished Make data base on Mon Mar  7 13:39:49 2022
 
  

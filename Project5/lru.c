@@ -16,10 +16,14 @@ LRUCache* LRUCacheCreate(int capacity) {
     cache = (LRUCache*)malloc(sizeof(LRUCache));
     cache->size = 0;
     cache->capacity = capacity;
-    struct myListNode *hashList = malloc(sizeof(struct myListNode) * 10000);
+    //struct myListNode *hashList = malloc(sizeof(struct myListNode) * 10000);
     cache->head = NULL;
     cache->tail = NULL;
-    cache->head = hashList;
+    int i = 0;
+    while (i < 10000) {
+        cache->hash[i] = NULL;
+        i++;
+    }
     return cache;
 }
 
@@ -34,10 +38,12 @@ int LRUCacheGet(LRUCache* obj, int key) {
         }
         //hash[key] is at front of list, needs to go to back
         else if (obj->head == obj->hash[key]) {
+            struct myListNode *p1;
+            p1 = obj->head->next;
             //make node after head's prev point to NULL
-            obj->head->next->prev = NULL;
+            p1->prev = NULL;
             //move head pointer to next node
-            obj->head = obj->head->next;
+            obj->head = p1;
             //make the tail's next point to hash[key]
             obj->tail->next = obj->hash[key];
             //make hash[key]'s prev point to the current tail
@@ -54,10 +60,13 @@ int LRUCacheGet(LRUCache* obj, int key) {
         }
         //hash[key] is in the middle of the list, move to the back
         else {
+            struct myListNode *p1, *p2;
+            p1 = obj->hash[key]->prev;
+            p2 = obj->hash[key]->next;
             //make the node before hash[key]'s next point to the one after hash[key]
-            obj->hash[key]->prev->next = obj->hash[key]->next;
+            p1->next = p2;
             //make the node after hash[key]'s prev point to the one before hash[key]
-            obj->hash[key]->next->prev = obj->hash[key]->prev;
+            p2->prev = p1;
             //make the tail's next point to hash[key]
             obj->tail->next = obj->hash[key];
             //make hash[key]'s prev point to the tail
@@ -104,7 +113,8 @@ void LRUCachePut(LRUCache* obj, int key, int value) {
                 obj->head->next->prev = NULL;
                 obj->head = obj->head->next;
                 obj->hash[remove->key] = NULL;
-                free(remove);
+                free(remove);        
+                
                 //add node to tail
                 obj->tail->next = node;
                 node->prev = obj->tail;
@@ -112,7 +122,7 @@ void LRUCachePut(LRUCache* obj, int key, int value) {
             }
         }
         else {
-            obj->size++;
+            obj->size = obj->size + 1;
             if (obj->tail == NULL) {
                 obj->tail = node;
                 obj->head = node;
@@ -127,12 +137,21 @@ void LRUCachePut(LRUCache* obj, int key, int value) {
             
         }
         obj->hash[key] = node;
-
         
     }
 }
 
 void LRUCacheFree(LRUCache* obj) {
+    struct myListNode *curr = obj->head;
+    if (curr != NULL) {
+        while(curr->next != NULL) {
+            struct myListNode *next = curr->next;
+            free(curr);
+            curr = next;
+        }
+        free(curr);
+    }
+    free(obj);
 }
 
 /* vim: set ts=4: */
