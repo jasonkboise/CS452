@@ -56,8 +56,9 @@ void * parallel_mergesort(void *arg){
 		return NULL;
 	}
 
-	arg1 = buildArgs(orig->left, orig->right/2, orig->level+1);
-	arg2 = buildArgs((orig->right/2)+1, orig->right, orig->level+1);
+	int middle = (orig->left + orig->right)/2;
+	arg1 = buildArgs(orig->left, middle, orig->level+1);
+	arg2 = buildArgs(middle+1, orig->right, orig->level+1);
 	pthread_create(&t1, NULL, parallel_mergesort, arg1);
 	pthread_create(&t2, NULL, parallel_mergesort, arg2);
 	pthread_join(t1, NULL);
