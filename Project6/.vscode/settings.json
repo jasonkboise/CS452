@@ -1,3 +1,10 @@
 {
-    "makefile.extensionOutputFolder": "./.vscode"
+    "makefile.extensionOutputFolder": "./.vscode",
+    "makefile.launchConfigurations": [
+        {
+            "cwd": "/home/cs452/Documents/CS452/CS452/Project6",
+            "binaryPath": "/home/cs452/Documents/CS452/CS452/Project6/test-mergesort",
+            "binaryArgs": []
+        }
+    ]
 }
