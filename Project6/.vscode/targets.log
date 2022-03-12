@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Sat Mar 12 10:15:39 2022
+# Make data base, printed on Sat Mar 12 10:40:13 2022
 
 # Variables
 
@@ -57,7 +57,7 @@ LESSOPEN = ||/usr/bin/lesspipe.sh %s
 # environment
 VSCODE_CWD = /home/cs452
 # environment
-SSH_CONNECTION = 192.168.149.1 54935 192.168.149.132 22
+SSH_CONNECTION = 192.168.149.1 50426 192.168.149.132 22
 # environment
 PATH = /home/cs452/.vscode-server/bin/c722ca6c7eed3d7987c0d5c3df5c45f6b15e77d1/bin/remote-cli:/usr/lib64/qt-3.3/bin:/home/cs452/perl5/bin:/usr/local/bin:/usr/bin:/usr/local/sbin:/usr/sbin:/home/cs452/.local/bin:/home/cs452/bin
 # environment
@@ -79,7 +79,7 @@ VSCODE_PIPE_LOGGING = true
 # environment
 PWD = /home/cs452/Documents/CS452/CS452/Project6
 # environment
-VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-c570cefe-008c-4d8e-a12c-fec74db5a5e4.sock
+VSCODE_IPC_HOOK_CLI = /run/user/1000/vscode-ipc-df726c4f-c533-4e1d-af69-12dde8e7d175.sock
 # automatic
 *D = $(patsubst %/,%,$(dir $*))
 # environment
@@ -117,7 +117,7 @@ SHLVL = 5
 # makefile (from `Makefile', line 1)
 CC = gcc
 # environment
-XDG_SESSION_ID = 1
+XDG_SESSION_ID = 2
 # environment
 USER = cs452
 # environment
@@ -135,7 +135,7 @@ MAKEFLAGS = Rrqp
 # environment
 MFLAGS = -Rrqp
 # environment
-SSH_CLIENT = 192.168.149.1 54935 22
+SSH_CLIENT = 192.168.149.1 50426 22
 # environment
 MAIL = /var/spool/mail/cs452
 # automatic
@@ -177,9 +177,9 @@ VSCODE_EXTHOST_WILL_SEND_SOCKET = true
 
 # Directories
 
-# . (device 64768, inode 5117772): 12 files, no impossibilities.
+# . (device 64768, inode 5117772): 17 files, no impossibilities.
 
-# 12 files, no impossibilities in 1 directories.
+# 17 files, no impossibilities in 1 directories.
 
 # Implicit Rules
 
@@ -191,7 +191,8 @@ all: test-mergesort
 #  Command line target.
 #  Implicit rule search has been done.
 #  File does not exist.
-#  File has not been updated.
+#  File has been updated.
+#  Successfully updated.
 
 .PHONY: clean
 #  Implicit rule search has not been done.
@@ -213,15 +214,17 @@ Makefile:
 
 # Not a target:
 mergesort.o:
-#  Implicit rule search has not been done.
-#  Modification time never checked.
-#  File has not been updated.
+#  Implicit rule search has been done.
+#  Last modified 2022-03-12 10:33:37.078010086
+#  File has been updated.
+#  Successfully updated.
 
 # Not a target:
 test-mergesort.o:
 #  Implicit rule search has been done.
-#  File does not exist.
-#  File has not been updated.
+#  Last modified 2022-03-12 10:33:37.055010084
+#  File has been updated.
+#  Successfully updated.
 
 # Not a target:
 .DEFAULT:
@@ -231,8 +234,9 @@ test-mergesort.o:
 
 test-mergesort: test-mergesort.o mergesort.o
 #  Implicit rule search has not been done.
-#  File does not exist.
-#  File has not been updated.
+#  Last modified 2022-03-12 10:33:37.100010087
+#  File has been updated.
+#  Successfully updated.
 #  recipe to execute (from `Makefile', line 8):
 	$(CC) $(CFLAGS) -o $@ $?
 
@@ -252,15 +256,13 @@ clean:
 
 # No general (`VPATH' variable) search path.
 
-# # of strings in strcache: 0 / lookups = 33 / hits = 33
+# # of strings in strcache: 0 / lookups = 38 / hits = 38
 # # of strcache buffers: 1 (* 8176 B/buffer = 8176 B)
-# strcache used: total = 0 (232) / max = 0 / min = 8176 / avg = 0
-# strcache free: total = 0 (7944) / max = 0 / min = 8176 / avg = 0
+# strcache used: total = 0 (261) / max = 0 / min = 8176 / avg = 0
+# strcache free: total = 0 (7915) / max = 0 / min = 8176 / avg = 0
 
 # strcache hash-table stats:
-# Load=22/8192=0%, Rehash=0, Collisions=1/33=3%
-# Finished Make data base on Sat Mar 12 10:15:39 2022
+# Load=24/8192=0%, Rehash=0, Collisions=1/38=3%
+# Finished Make data base on Sat Mar 12 10:40:13 2022
 
- 
-make: *** No rule to make target `test-mergesort.o', needed by `test-mergesort'.  Stop.
  

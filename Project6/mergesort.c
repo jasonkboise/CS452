@@ -47,7 +47,7 @@ void mergesort(int left, int right){
 
 /* this function will be called by the testing program. */
 void * parallel_mergesort(void *arg){
-	pthread_t *t1, *t2;
+	pthread_t t1, t2;
 	struct argument *arg1, *arg2, *orig;
 
 	orig = (struct argument*)arg;
@@ -55,15 +55,13 @@ void * parallel_mergesort(void *arg){
 		mergesort(orig->left, orig->right);
 		return NULL;
 	}
-	t1 = (pthread_t *)malloc(sizeof(pthread_t));
-	t2 = (pthread_t *)malloc(sizeof(pthread_t));
 
-	arg1 = buildArgs(0, orig->right/2, orig->level+1);
+	arg1 = buildArgs(orig->left, orig->right/2, orig->level+1);
 	arg2 = buildArgs((orig->right/2)+1, orig->right, orig->level+1);
-	pthread_create(t1, NULL, parallel_mergesort, arg1);
-	pthread_create(t2, NULL, parallel_mergesort, arg2);
-	pthread_join(*t1, NULL);
-	pthread_join(*t2, NULL);
+	pthread_create(&t1, NULL, parallel_mergesort, arg1);
+	pthread_create(&t2, NULL, parallel_mergesort, arg2);
+	pthread_join(t1, NULL);
+	pthread_join(t2, NULL);
 	merge(arg1->left, arg1->right, arg2->left, arg2->right);
 
 	return NULL;
