@@ -6,7 +6,7 @@ make all --print-data-base --no-builtin-variables --no-builtin-rules --question
 # This is free software: you are free to change and redistribute it.
 # There is NO WARRANTY, to the extent permitted by law.
 
-# Make data base, printed on Fri Mar 11 21:46:05 2022
+# Make data base, printed on Fri Mar 11 22:44:40 2022
 
 # Variables
 
@@ -39,7 +39,7 @@ VSCODE_NLS_CONFIG = {"locale":"en","availableLanguages":{}}
 # environment
 _ = /usr/bin/make
 # makefile (from `Makefile', line 2)
-CFLAGS = -Wall -Wextra -Wpointer-arith -Wstrict-prototypes -std=gnu89 -fPIC -MMD -MP -lpthread
+CFLAGS = -Wall -Wextra -Wpointer-arith -Wstrict-prototypes -std=gnu89 -fPIC -MMD -MP -lpthread -g
 # makefile (from `Makefile', line 1)
 MAKEFILE_LIST :=  Makefile
 # environment
@@ -208,21 +208,21 @@ all: test-mergesort
 # Not a target:
 Makefile:
 #  Implicit rule search has been done.
-#  Last modified 2022-03-11 19:47:24.807011459
+#  Last modified 2022-03-11 22:44:36.321739647
 #  File has been updated.
 #  Successfully updated.
 
 # Not a target:
 mergesort.o:
 #  Implicit rule search has been done.
-#  Last modified 2022-03-11 21:35:55.38445739
+#  Last modified 2022-03-11 22:42:34.174731281
 #  File has been updated.
 #  Successfully updated.
 
 # Not a target:
 test-mergesort.o:
 #  Implicit rule search has been done.
-#  Last modified 2022-03-11 21:35:55.323457386
+#  Last modified 2022-03-11 22:33:59.889696056
 #  File has been updated.
 #  Successfully updated.
 
@@ -234,7 +234,7 @@ test-mergesort.o:
 
 test-mergesort: test-mergesort.o mergesort.o
 #  Implicit rule search has not been done.
-#  Last modified 2022-03-11 21:35:55.422457393
+#  Last modified 2022-03-11 22:42:44.785732008
 #  File has been updated.
 #  Successfully updated.
 #  recipe to execute (from `Makefile', line 8):
@@ -263,6 +263,6 @@ clean:
 
 # strcache hash-table stats:
 # Load=24/8192=0%, Rehash=0, Collisions=1/38=3%
-# Finished Make data base on Fri Mar 11 21:46:05 2022
+# Finished Make data base on Fri Mar 11 22:44:40 2022
 
  

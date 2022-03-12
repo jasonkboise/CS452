@@ -10,11 +10,12 @@
 
 /* this function will be called by mergesort() and also by parallel_mergesort(). */
 void merge(int leftstart, int leftend, int rightstart, int rightend){
-	int size = rightend - leftstart;
 
+	int size = rightend - leftstart + 1;
 	int left = leftstart;
 	int right = rightstart;
 	int i = leftstart;
+
 	while (left <= leftend && right <= rightend) {
 		if (A[left] <= A[right]) {
 			B[i] = A[left];
@@ -27,8 +28,8 @@ void merge(int leftstart, int leftend, int rightstart, int rightend){
 		i++;
 	}
 
-	memcpy(&B[i], &A[left], (leftend-left)+1);
-	memcpy(&B[i], &A[right], (rightend-right)+1);
+	memcpy(&B[i], &A[left], leftend-left+1);
+	memcpy(&B[i], &A[right], rightend-right+1);
 	memcpy(&A[leftstart], &B[leftstart], size);
 }
 
