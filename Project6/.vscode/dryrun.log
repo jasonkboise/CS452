@@ -1,0 +1,7 @@
+make --dry-run --keep-going --print-directory
+make: Entering directory `/home/cs452/Documents/CS452/CS452/Project6'
+gcc -Wall -Wextra -Wpointer-arith -Wstrict-prototypes -std=gnu89 -fPIC -MMD -MP -lpthread   -c -o test-mergesort.o test-mergesort.c
+gcc -Wall -Wextra -Wpointer-arith -Wstrict-prototypes -std=gnu89 -fPIC -MMD -MP -lpthread   -c -o mergesort.o mergesort.c
+gcc -Wall -Wextra -Wpointer-arith -Wstrict-prototypes -std=gnu89 -fPIC -MMD -MP -lpthread -o test-mergesort test-mergesort.o mergesort.o
+make: Leaving directory `/home/cs452/Documents/CS452/CS452/Project6'
+ 

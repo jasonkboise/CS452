@@ -14,16 +14,41 @@ void merge(int leftstart, int leftend, int rightstart, int rightend){
 
 /* this function will be called by parallel_mergesort() as its base case. */
 void mergesort(int left, int right){
+	//base case
+	//mergesort(left array)
+	//mergesort(right array)
+	//merge (two arrays)
 }
 
 /* this function will be called by the testing program. */
 void * parallel_mergesort(void *arg){
+	pthread_t t1,t2;
+	struct argument *arg1, *arg2, *orig;
+
+	orig = (struct argument*)arg;
+	if (orig->level == cutoff) {
+		mergesort(orig->left, orig->right);
 		return NULL;
+	}
+
+	arg1 = buildArgs(0, orig->right/2, orig->level+1);
+	arg2 = buildArgs((orig->right/2)+1, orig->right, orig->level+1);
+	pthread_create(t1, NULL, parallel_mergesort, arg1);
+	pthread_create(t2, NULL, parallel_mergesort, arg2);
+	pthread_join(t1, NULL);
+	pthread_join(t2, NULL);
+	merge(arg1->left, arg1->right, arg2->left, arg2->right);
+
+	return NULL;
 }
 
 /* we build the argument for the parallel_mergesort function. */
 struct argument * buildArgs(int left, int right, int level){
-		return NULL;
+	struct argument *arg = (struct argument*)malloc(sizeof(struct argument));
+	arg->left = left;
+	arg->right = right;
+	arg->level = level;
+	return arg;
 }
 
 /* vim: set ts=4: */
