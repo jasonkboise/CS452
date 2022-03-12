@@ -28,9 +28,9 @@ void merge(int leftstart, int leftend, int rightstart, int rightend){
 		i++;
 	}
 
-	memcpy(&B[i], &A[left], leftend-left+1);
-	memcpy(&B[i], &A[right], rightend-right+1);
-	memcpy(&A[leftstart], &B[leftstart], size);
+	memcpy(&B[i], &A[left], (leftend-left+1)*sizeof(int));
+	memcpy(&B[i], &A[right], (rightend-right+1)*sizeof(int));
+	memcpy(&A[leftstart], &B[leftstart], size*sizeof(int));
 }
 
 /* this function will be called by parallel_mergesort() as its base case. */
