@@ -10,19 +10,31 @@
 
 /* this function will be called by mergesort() and also by parallel_mergesort(). */
 void merge(int leftstart, int leftend, int rightstart, int rightend){
+	int size = rightend - leftstart;
+
+	int left = leftstart;
+	int right = rightstart;
+	int i = leftstart;
+	while (left <= leftend && right <= rightend) {
+
+	}
 }
 
 /* this function will be called by parallel_mergesort() as its base case. */
 void mergesort(int left, int right){
-	//base case
-	//mergesort(left array)
-	//mergesort(right array)
-	//merge (two arrays)
+	//if there is only 1 thing in list, it is sorted
+	if (left >= right) {
+		return;
+	}
+	int middle = (left + right)/2;
+	mergesort(left, middle);
+	mergesort(middle+1, right);
+	merge(left, middle, middle+1, right);
 }
 
 /* this function will be called by the testing program. */
 void * parallel_mergesort(void *arg){
-	pthread_t t1,t2;
+	pthread_t t1, t2;
 	struct argument *arg1, *arg2, *orig;
 
 	orig = (struct argument*)arg;
