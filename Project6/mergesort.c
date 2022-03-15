@@ -64,6 +64,8 @@ void * parallel_mergesort(void *arg){
 	pthread_join(t1, NULL);
 	pthread_join(t2, NULL);
 	merge(arg1->left, arg1->right, arg2->left, arg2->right);
+	free(arg1);
+	free(arg2);
 
 	return NULL;
 }
