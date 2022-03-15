@@ -56,6 +56,10 @@ void * parallel_mergesort(void *arg){
 		return NULL;
 	}
 
+	if (orig->left >= orig->right) {
+		return NULL;
+	}
+
 	int middle = (orig->left + orig->right)/2;
 	arg1 = buildArgs(orig->left, middle, orig->level+1);
 	arg2 = buildArgs(middle+1, orig->right, orig->level+1);

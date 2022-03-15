@@ -12,10 +12,10 @@ own thread for faster run times.
 ## Manifest
 
 * Makefile - used to build the project
-* lru.c - the main C file
-* lru.h - the header file for the main C file
-* lru-test[1-7] - testing files
+* mergesort.c - the main C file that implements the merge sort
+* mergesort.h - the header file for the main C file
 * runval.sh - a bash script file for testing for memory leaks
+* test-mergesort.c - a testing file
 * README.md - this file
 
 ## Building the project
@@ -26,10 +26,10 @@ all of the files, then run the command:
 ```
 make
 ```
-Then try running one of the tests by using:
+Then try running a test by using the command:
 
 ```
-./infiniti-test1
+./test-mergesort [size of array] [# of threads] [randomizer seed]
 ```
 
 ## Features and usage
