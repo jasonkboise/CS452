@@ -13,7 +13,6 @@ struct tsb_list {
     pthread_cond_t listNotEmpty;
 };
 
-int addDone = 0;
 /* write all your functions below */
 
 /* this function returns a pointer to the allocated tsb list */
@@ -25,7 +24,7 @@ struct tsb_list * tsb_createList(int (*equals)(const void *, const void *), char
     pthread_mutex_init(&(ret->mutex), NULL);
     pthread_cond_init(&(ret->listNotEmpty), NULL);
     pthread_cond_init(&(ret->listNotFull), NULL);
-	return NULL;
+	return ret;
 }
 
 void tsb_freeList(struct tsb_list * list){
@@ -69,7 +68,7 @@ void tsb_addAtRear(struct tsb_list * list, NodePtr node){
 /* this function returns a pointer to the node that was removed */
 NodePtr tsb_removeFront(struct tsb_list * list){
     pthread_mutex_lock(&(list->mutex));
-    while(list->list->size == 0) {
+    while(list->list->size == 0 && list->stop_requested == 0) {
         pthread_cond_wait(&(list->listNotEmpty), &(list->mutex));
     }
     NodePtr removed = removeFront(list->list);
@@ -86,7 +85,7 @@ NodePtr tsb_removeFront(struct tsb_list * list){
 /* this function returns a pointer to the node that was removed */
 NodePtr tsb_removeRear(struct tsb_list * list){
     pthread_mutex_lock(&(list->mutex));
-    while(list->list->size == 0) {
+    while(list->list->size == 0 && list->stop_requested == 0) {
         pthread_cond_wait(&(list->listNotEmpty), &(list->mutex));
     }
     NodePtr removed = removeRear(list->list);
@@ -101,4 +100,8 @@ NodePtr tsb_removeRear(struct tsb_list * list){
 }
 
 void tsb_finishUp(struct tsb_list * list){
+    pthread_mutex_lock(&(list->mutex));
+    list->stop_requested = 1;
+    pthread_cond_broadcast(&(list->listNotEmpty));
+    pthread_mutex_unlock(&(list->mutex));
 }
