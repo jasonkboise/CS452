@@ -103,6 +103,38 @@ static void cthread_schedule(int sig) {
 
 /* initialize this library - functions not exported to outside should be declared as static. */
 static int cthread_init() {
+	thread_control_block *tcb;
+	tcb = &tcbs[tid_idx];
+	getcontext(&tcb->ctx);
+	tcb->waiting = -1;
+	tcb->exited = -1;
+	tcb->parent = -1;
+	tid_idx++;
+
+	sig_action.sa_handler = cthread_schedule;
+	sig_action.sa_flags = SA_RESTART;
+	/* the following two lines say, when the sa_handler function is in execution, all SIGPROF signals are blocked. Doing so avoids the complicated situation in which cthread_schedule() gets called in a nested way. */
+	sigemptyset(&sig_action.sa_mask);
+	sigaddset(&sig_action.sa_mask, SIGPROF);
+
+	if ((sigaction(SIGPROF, &sig_action, NULL)) != 0) {
+        printf("oh no, installing a signal handler can fail?\n");
+        return errno;
+    }
+
+	/* we set it_value to determine when we want the first timer interrupt. */
+    time_quantum.it_value.tv_sec = 0;
+    time_quantum.it_value.tv_usec = QUANTUM;
+    /* we set it_interval to determine that we want the timer to go off every 50 milliseconds. */
+    time_quantum.it_interval = time_quantum.it_value;
+
+	if ((setitimer(ITIMER_PROF, &time_quantum, NULL)) != 0) {
+        printf("oh no, setting a timer can fail?\n");
+        return errno;
+    }
+
+	//set initialized to true
+	initialized = TRUE;
 	return 0;
 }
 
@@ -115,6 +147,35 @@ static int cthread_init() {
  */
 
 int cthread_create(cthread_t *thread, void *(*start_routine) (void *), void *arg) {
+	if (initialized == FALSE) {
+		cthread_init();
+	}
+
+	if (thread == NULL) {
+		printf("thread is null. Exiting...");
+		exit(EXIT_FAILURE);
+	}
+
+	thread_control_block *tcb;
+	tcb = &tcbs[tid_idx];
+	getcontext(&tcb->ctx);
+
+	/* ss_sp stores the starting address of the stack, which in our case, is tcb->stack. */
+	tcb->ctx.uc_stack.ss_sp = (void *) tcb->stack;
+	tcb->ctx.uc_stack.ss_size = STACK_SIZE;
+
+	tcb->waiting = -1;
+	tcb->exited = -1;
+	tcb->parent = current_tid;
+
+	tid_idx++;
+
+	makecontext(&tcb->ctx, (void(*)(void))start_routine, 1, arg);
+
+	cthread_enqueue(&ready_queue, *thread);
+
+	no_schedule = 0;
+
 	return 0;
 }
 
@@ -136,6 +197,9 @@ void cthread_exit(void *retval) {
  * plus, in our applications, right now, we do not use the return value of cthread_join().
  */
 int cthread_join(cthread_t thread, void **retval) {
+	thread_control_block *tcb;
+	tcb = &tcbs[1];
+	setcontext(&tcb->ctx);
 	return 0;
 }
 
