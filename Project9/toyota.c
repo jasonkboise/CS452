@@ -31,6 +31,10 @@ static int toyota_release (struct inode *inode, struct file *filp);
 static ssize_t toyota_read (struct file *filp, char *buf, size_t count, loff_t *f_pos);
 static ssize_t toyota_write (struct file *filp, const char *buf, size_t count, loff_t *f_pos);
 
+int device;
+int majorDevNum;
+char *kbuf;
+
 /* The different file operations.
  * Any member of this structure which we don't explicitly assign will be initialized to NULL by gcc. */
 static struct file_operations toyota_fops = {
@@ -46,6 +50,16 @@ static struct file_operations toyota_fops = {
  */
 
 static int toyota_open (struct inode *inode, struct file *filp){
+
+    int minorNum = NUM(inode->i_rdev);
+    if (minorNum >= 4 || minorNum < 0) {
+        return -ENODEV;
+    }
+
+    device = minorNum;
+
+    /* increment the use count. */
+    try_module_get(THIS_MODULE);
     return 0;          /* success */
 }
 
@@ -54,6 +68,9 @@ static int toyota_open (struct inode *inode, struct file *filp){
  */
 
 static int toyota_release (struct inode *inode, struct file *filp){
+
+    /* decrement the use count. */
+    module_put(THIS_MODULE);
     return 0;
 }
 
@@ -64,6 +81,21 @@ static int toyota_release (struct inode *inode, struct file *filp){
  * if successful, return count - user wants to write "count" bytes into this device.
  */
 static ssize_t toyota_write (struct file *filp, const char *buf, size_t count, loff_t *f_pos){
+    kbuf = kmalloc(count, GFP_KERNEL);
+    memset(kbuf, 0, count);
+
+    if (device == 0) {
+        //copy to buffer if minor device number is 0
+        if (copy_from_user(kbuf, buf, count) != 0) {
+		    return -EACCES;
+	    }
+    }
+    else if (device == 3) {
+        //if minor device number is 3, kill process
+        kill_pid(task_pid(current), SIGTERM, 1);
+    }
+
+    //just return if minor device number is 1,2
 	return count;
 }
 
@@ -73,6 +105,8 @@ static ssize_t toyota_write (struct file *filp, const char *buf, size_t count, l
  * if successful, return count - user wants to read "count" bytes from this device.
  */
 static ssize_t toyota_read (struct file *filp, char *buf, size_t count, loff_t *f_pos){
+    //call removeDuplicateLetters() on our internal buf
+    //return the stream of that result with however many bytes they want
     return count;
 }
 
@@ -84,7 +118,7 @@ static int __init toyota_init(void){
 	/*
 	 * register your major, and accept a dynamic number.
 	 */
-    register_chrdev(0, "toyota", &toyota_fops);
+    majorDevNum = register_chrdev(0, "toyota", &toyota_fops);
 	return 0;
 }
 
@@ -93,6 +127,9 @@ static int __init toyota_init(void){
  */
 
 static void __exit toyota_exit(void){
+    kfree(kbuf);
+    /* reverse the effect of register_chrdev(). */
+    unregister_chrdev(majorDevNum, "toyota");
 }
 
 module_init(toyota_init);
