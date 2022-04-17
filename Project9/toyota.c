@@ -92,20 +92,6 @@ static ssize_t toyota_write(struct file *filp, const char *buf, size_t count, lo
     memset(kbuf, 0, count);
     kbufSize = 0;
 
-    printk("\n");
-    printk("starting again!!!\n");
-
-    printk("original count: %d\n", (int)count);
-    printk("original kbuf size: %d\n", (int)strlen(kbuf));
-
-    printk("kbuf before is: ");
-    for(i=0; i<count; i++)
-    {
-        printk("%c",kbuf[i]);
-    }
-    printk("\n");
-    
-
     if (device == 0)
     {
         // copy to buffer if minor device number is 0
@@ -122,12 +108,6 @@ static ssize_t toyota_write(struct file *filp, const char *buf, size_t count, lo
         kill_pid(task_pid(current), SIGTERM, 1);
     }
     
-    printk("kbuf is: ");
-    for(i=0; i<count; i++)
-    {
-        printk("%c",kbuf[i]);
-    }
-    printk("\n");
     // just return if minor device number is 1,2
     return count;
 }
@@ -162,11 +142,8 @@ static char *removeDuplicateLetters(char *s, size_t slen)
         added[s[i] - 'a'] = 1;
     }
 
-    printk("outlen = %d\n", outlen);
     out[outlen] = '\0';
 
-    slen = strlen(out);
-    printk("new length: %d\n", (int)slen);
     return out;
 }
 
@@ -182,39 +159,13 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
     int i, test;
     size_t len;
     char *out = (char *)kmalloc(count, GFP_KERNEL);
-    printk("kbuf after getting to read: ");
-    for(i=0; i<(int)strlen(kbuf); i++)
-    {
-        printk("%c",kbuf[i]);
-    }
-    printk("\n");
     char *result = removeDuplicateLetters(kbuf, kbufSize);
     
     out[0] = '\0';
-
     kfree(kbuf);
 
     len = strlen(result);
 
-    printk("count is: %d\n", (int)count);
-    printk("result length: %d\n", (int)len);
-    printk("result is: ");
-    for(i=0; i<len; i++)
-    {
-        printk("%c",result[i]);
-    }
-    printk("\n");
-
-    
-
-    if (len > 0)
-    test = ((int)count / (int)len);
-    else
-    test = 0;
-    printk("count / len = %d\n", test);
-    //test = (int)(count % len);
-    //printk("count (MOD) len = %d\n", test);
-    
     if (len > 0) {
         for (i = 0; i < (int)(count / len); i++) {
             strcat(out, result);
@@ -223,27 +174,15 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
             strncat(out, result, (count % len));
         }
     }
-    
-
-    //len = strlen(out);
-    //printk("out length is: %d\n", len);
-    printk("out is: ");
-    for(i=0; i<count; i++)
-    {
-        printk("%c",out[i]);
-    }
-    printk("\n");
 
     len = strlen(out);
 
     if(copy_to_user(buf, out, len) != 0) {
-        printk("GOT HERE!!!!! \n");
 		kfree(out);
 		return -EACCES;
 	}
 
     kfree(out);
-    printk("Im here :) \n");
 
     return len;
 }
