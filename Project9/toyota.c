@@ -87,7 +87,6 @@ static int toyota_release(struct inode *inode, struct file *filp)
  */
 static ssize_t toyota_write(struct file *filp, const char *buf, size_t count, loff_t *f_pos)
 {
-    int i;
     kbuf = kmalloc(count, GFP_KERNEL);
     memset(kbuf, 0, count);
     kbufSize = 0;
@@ -156,7 +155,7 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
 {
     // call removeDuplicateLetters() on our internal buf
     // return the stream of that result with however many bytes they want
-    int i, test;
+    int i;
     size_t len;
     char *out = (char *)kmalloc(count, GFP_KERNEL);
     char *result = removeDuplicateLetters(kbuf, kbufSize);
