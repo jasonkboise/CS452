@@ -116,40 +116,43 @@ static ssize_t toyota_write(struct file *filp, const char *buf, size_t count, lo
 static char *removeDuplicateLetters(char *s, size_t slen)
 {
     size_t i, outlen = 0;
+    //keeps track of the amount of occurances of a letter in the string
     int alphabet[26] = {0};
-    int stack[26] = {0};
+    //keeps track of if a letter is in the stack
+    int inStack[26] = {0};
 
-    //make the output buffer using kmalloc
+    //make the output buffer (stack) using kmalloc
     char *out = (char *)kmalloc(sizeof(char) * (slen + 1), GFP_KERNEL);
     memset(out, 0, sizeof(char) * (slen + 1));
 
     //count the occurance of each letter in the string
-    for (i = 0; i < slen; i++)
+    for (i = 0; i < slen; i++) {
         alphabet[s[i] - 'a']++;
+    }
 
     for (i = 0; i < slen; i++)
     {
-        //if the current letter is in the stack, skip it
-        if (stack[s[i] - 'a'])
+        //if the current letter is in the stack, skip it and decrement the occurance
+        if (inStack[s[i] - 'a'])
         {
             alphabet[s[i] - 'a']--;
             continue;
         }
-        //if the current letter is less than the stack's head and we can add the letter,
+        //if the current letter is less than the stack's head and we can add the letter
         //from the head later (i.e. there is a duplicate down the road), remove the head.
         //keep doing this until this is false.
         while (outlen > 0 && s[i] < out[outlen - 1] && alphabet[out[outlen - 1] - 'a'] > 0)
         {
-            stack[out[outlen - 1] - 'a'] = 0;
+            inStack[out[outlen - 1] - 'a'] = 0;
             outlen--;
         }
 
-        //Add the letter to the output string
+        //Add the letter to the stack
         out[outlen++] = s[i];
         //decrement the occurance of that letter
         alphabet[s[i] - 'a']--;
-        //Add the current letter to the stack.
-        stack[s[i] - 'a'] = 1;
+        //set the inStack of that letter to 1 (true)
+        inStack[s[i] - 'a'] = 1;
     }
 
     //end string with a terminator character
