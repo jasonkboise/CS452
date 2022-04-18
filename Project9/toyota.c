@@ -23,7 +23,7 @@
 
 #include "toyota.h" /* local definitions */
 
-MODULE_AUTHOR("Jidong Xiao"); /* change this line to your name */
+MODULE_AUTHOR("Jason Kuphaldt"); /* change this line to your name */
 MODULE_LICENSE("GPL");
 
 static int toyota_open(struct inode *inode, struct file *filp);
@@ -53,13 +53,14 @@ static struct file_operations toyota_fops = {
 
 static int toyota_open(struct inode *inode, struct file *filp)
 {
-
+    //get the minor number
     int minorNum = NUM(inode->i_rdev);
     if (minorNum >= 4 || minorNum < 0)
     {
         return -ENODEV;
     }
 
+    //put minor number in global variable
     device = minorNum;
 
     /* increment the use count. */
@@ -111,36 +112,47 @@ static ssize_t toyota_write(struct file *filp, const char *buf, size_t count, lo
     return count;
 }
 
+//removes the duplicate letters and keep lexicograghical order
 static char *removeDuplicateLetters(char *s, size_t slen)
 {
     size_t i, outlen = 0;
-    int dic[26] = {0};
-    int added[26] = {0};
+    int alphabet[26] = {0};
+    int stack[26] = {0};
 
     //make the output buffer using kmalloc
     char *out = (char *)kmalloc(sizeof(char) * (slen + 1), GFP_KERNEL);
     memset(out, 0, sizeof(char) * (slen + 1));
 
+    //count the occurance of each letter in the string
     for (i = 0; i < slen; i++)
-        dic[s[i] - 'a']++;
+        alphabet[s[i] - 'a']++;
 
     for (i = 0; i < slen; i++)
     {
-        if (added[s[i] - 'a'])
+        //if the current letter is in the stack, skip it
+        if (stack[s[i] - 'a'])
         {
-            dic[s[i] - 'a']--;
+            alphabet[s[i] - 'a']--;
             continue;
         }
-        while (outlen > 0 && s[i] < out[outlen - 1] && dic[out[outlen - 1] - 'a'] > 0)
+        //if the current letter is less than the stack's head and we can add the letter,
+        //from the head later (i.e. there is a duplicate down the road), remove the head.
+        //keep doing this until this is false.
+        while (outlen > 0 && s[i] < out[outlen - 1] && alphabet[out[outlen - 1] - 'a'] > 0)
         {
-            added[out[outlen - 1] - 'a'] = 0;
+            stack[out[outlen - 1] - 'a'] = 0;
             outlen--;
         }
+
+        //Add the letter to the output string
         out[outlen++] = s[i];
-        dic[s[i] - 'a']--;
-        added[s[i] - 'a'] = 1;
+        //decrement the occurance of that letter
+        alphabet[s[i] - 'a']--;
+        //Add the current letter to the stack.
+        stack[s[i] - 'a'] = 1;
     }
 
+    //end string with a terminator character
     out[outlen] = '\0';
 
     return out;
@@ -153,8 +165,6 @@ static char *removeDuplicateLetters(char *s, size_t slen)
  */
 static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
-    // call removeDuplicateLetters() on our internal buf
-    // return the stream of that result with however many bytes they want
     int i;
     size_t len;
     char *out = (char *)kmalloc(count, GFP_KERNEL);
@@ -165,6 +175,7 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
 
     len = strlen(result);
 
+    //creates the stream to be returned to the user
     if (len > 0) {
         for (i = 0; i < (int)(count / len); i++) {
             strcat(out, result);
@@ -176,6 +187,7 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
 
     len = strlen(out);
 
+    //returns the stream
     if(copy_to_user(buf, out, len) != 0) {
 		kfree(out);
 		return -EACCES;
