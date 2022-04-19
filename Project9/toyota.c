@@ -34,7 +34,7 @@ static char *removeDuplicateLetters(char *s, size_t slen);
 
 int device;
 int majorDevNum;
-char *kbuf;
+char *kbuf = NULL;
 size_t kbufSize;
 
 /* The different file operations.
@@ -168,6 +168,9 @@ static char *removeDuplicateLetters(char *s, size_t slen)
  */
 static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
+    if (kbuf == NULL) {
+        return -1;
+    }
     int i;
     size_t len;
     char *out = (char *)kmalloc(count, GFP_KERNEL);
@@ -175,6 +178,7 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
     
     out[0] = '\0';
     kfree(kbuf);
+    kbuf = NULL;
 
     len = strlen(result);
 
