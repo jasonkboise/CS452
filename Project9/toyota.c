@@ -168,15 +168,21 @@ static char *removeDuplicateLetters(char *s, size_t slen)
  */
 static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f_pos)
 {
+    int i;
+    size_t len;
+    char *out, *result;
+
     if (kbuf == NULL) {
         return -1;
     }
-    int i;
-    size_t len;
-    char *out = (char *)kmalloc(count, GFP_KERNEL);
-    char *result = removeDuplicateLetters(kbuf, kbufSize);
+
+    out = (char *)kmalloc(count, GFP_KERNEL);
+    result = removeDuplicateLetters(kbuf, kbufSize);
     
+    //set the first byte to be a terminator so that strcat works
     out[0] = '\0';
+
+    //free the kbuf and set it to NULL as we don't need it anymore
     kfree(kbuf);
     kbuf = NULL;
 
@@ -200,6 +206,7 @@ static ssize_t toyota_read(struct file *filp, char *buf, size_t count, loff_t *f
 		return -EACCES;
 	}
 
+    //free the output buffer
     kfree(out);
 
     return len;
