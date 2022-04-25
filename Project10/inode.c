@@ -258,9 +258,22 @@ put_ino:
 static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
 {
 	struct inode *inode;
+	int len;
+
+	len = strlen(dentry->d_name.name);
+	if (len > AUDI_FILENAME_LEN) {
+		return -ENAMETOOLONG;
+	}
+
+	if (dir->i_nlink > AUDI_MAX_SUBFILES) {
+		return -EMLINK;
+	}
+
     pr_info("creating a new file or directory...\n");
     /* get a new free inode */
     inode = audi_new_inode(dir, mode);
+
+	
     return 0;
 }
 
