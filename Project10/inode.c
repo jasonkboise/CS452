@@ -258,14 +258,30 @@ put_ino:
 static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, bool excl)
 {
 	struct inode *inode;
-	int len;
+	struct super_block *sb;
+	struct buffer_head *bh;
+	struct audi_dir_block *dir_block;
+	int len, i, block_num;
 
 	len = strlen(dentry->d_name.name);
 	if (len > AUDI_FILENAME_LEN) {
 		return -ENAMETOOLONG;
 	}
+	
+	
 
-	if (dir->i_nlink > AUDI_MAX_SUBFILES) {
+	//get the parent directory's super_block
+	sb = dir->i_sb;
+
+	//get the parent directory's block number
+	block_num = AUDI_INODE(dir)->data_block;
+	
+	//get the data block 
+	bh = sb_bread(sb, block_num);
+	dir_block = (struct audi_dir_block *) bh->b_data;
+
+	//if the dentry table is already full
+	if (dir_block->entries[63].inode != 0) {
 		return -EMLINK;
 	}
 
@@ -273,7 +289,33 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
     /* get a new free inode */
     inode = audi_new_inode(dir, mode);
 
-	
+	//insert the new inode at the end of the parent's dentry table
+	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
+		if (dir_block->entries[i].inode == 0) {
+			dir_block->entries[i].inode = inode->i_ino;
+			strncpy(dir_block->entries[i].name, dentry->d_name.name, len);
+			break;
+		}
+	}
+
+	//mark the inode as dirty
+	mark_inode_dirty(inode);
+
+	//update the parent directory's last modified time and last accessed time to current time
+	dir->i_mtime = dir->i_atime = CURRENT_TIME;
+
+	//call inc_nlink() to increment the parent directory's link count, if the newly created item is a directory
+	if (S_ISDIR(mode)) {
+		inc_nlink(dir);
+	}
+    
+	//call mark_inode_dirty() to mark the parent's inode as dirty
+	mark_inode_dirty(dir);
+
+	//call d_instantiate() to fill in the inode information for a dentry.
+	d_instantiate(dentry, inode);
+
+	//we can now return 0.
     return 0;
 }
 
