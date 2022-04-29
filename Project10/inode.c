@@ -298,6 +298,10 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 		}
 	}
 
+	//mark the buffer dirty so the change is flushed back into the disk
+	mark_buffer_dirty(bh);
+	brelse(bh);
+
 	//mark the inode as dirty
 	mark_inode_dirty(inode);
 
