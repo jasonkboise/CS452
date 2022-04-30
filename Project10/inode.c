@@ -366,6 +366,21 @@ static struct dentry *audi_lookup(struct inode *dir, struct dentry *dentry, unsi
 		}
 	}
 
+	//update the parent directory's last modified time and last accessed time to current time
+	dir->i_mtime = dir->i_atime = CURRENT_TIME;
+
+	//call mark_inode_dirty() to mark the parent's inode as dirty
+	mark_inode_dirty(dir);
+
+	//fill in the dentry with the inode's information.
+	if (found) {
+		d_add(dentry, inode);
+	}
+	else {
+		d_add(dentry, NULL);
+	}
+
+	//we can now return NULL
     return NULL;
 }
 
