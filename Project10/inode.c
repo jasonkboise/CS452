@@ -267,8 +267,6 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	if (len > AUDI_FILENAME_LEN) {
 		return -ENAMETOOLONG;
 	}
-	
-	
 
 	//get the parent directory's super_block
 	sb = dir->i_sb;
@@ -336,7 +334,38 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
  * */
 static struct dentry *audi_lookup(struct inode *dir, struct dentry *dentry, unsigned int flags)
 {
+	struct inode *inode;
+	struct super_block *sb;
+	struct buffer_head *bh;
+	struct audi_dir_block *dir_block;
+	int len, i, block_num, found;
+
+	len = strlen(dentry->d_name.name);
+	if (len > AUDI_FILENAME_LEN) {
+		return (struct dentry *)-ENAMETOOLONG;
+	}
+
+	//get the parent directory's super_block
+	sb = dir->i_sb;
+
+	//get the parent directory's block number
+	block_num = AUDI_INODE(dir)->data_block;
+	
+	//get the data block 
+	bh = sb_bread(sb, block_num);
+	dir_block = (struct audi_dir_block *) bh->b_data;
+
+	//search for the inode
 	pr_info("looking up...\n");
+	found = 0;
+	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
+		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0) {
+			found = 1;
+			inode = audi_iget(sb, dir_block->entries[i].inode);
+			break;
+		}
+	}
+
     return NULL;
 }
 
