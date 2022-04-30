@@ -399,7 +399,92 @@ static struct dentry *audi_lookup(struct inode *dir, struct dentry *dentry, unsi
  */
 static int audi_unlink(struct inode *dir, struct dentry *dentry)
 {
+	struct inode *inode;
+	struct super_block *sb;
+	struct audi_sb_info *sbi;
+	struct buffer_head *bh;
+	struct audi_dir_block *dir_block;
+	int len, i, block_num, found, bno;
+
+	len = strlen(dentry->d_name.name);
+	if (len > AUDI_FILENAME_LEN) {
+		return -ENAMETOOLONG;
+	}
+
 	pr_info("unlinking...\n");
+
+	//get the parent directory's super_block
+	sb = dir->i_sb;
+
+	//get the parent directory's block number
+	block_num = AUDI_INODE(dir)->data_block;
+	
+	//get the data block 
+	bh = sb_bread(sb, block_num);
+	dir_block = (struct audi_dir_block *) bh->b_data;
+
+	//search for the inode
+	found = 0;
+	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
+		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0) {
+			found = 1;
+			inode = audi_iget(sb, dir_block->entries[i].inode);
+			memmove(dir_block->entries+(i*sizeof(struct audi_dir_entry)), dir_block->entries+((i+1)*sizeof(struct audi_dir_entry)), sizeof(struct audi_dir_entry)*(64-(i+1)));
+			break;
+		}
+	}
+
+	//if the dentry wasn't found, return -ENOENT
+	if (!found) return -ENOENT;
+
+	//0 out the last entry in the table
+	for (i = 0; i < AUDI_MAX_SUBFILES-1; i++) {
+		if (dir_block->entries[i+1].inode == 0) {
+			memset(dir_block->entries+(i*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
+			break;
+		}
+	}
+
+	//update the parent directory's last modified time and last accessed time to current time
+	dir->i_mtime = dir->i_atime = CURRENT_TIME;
+
+	//decrement the parent directory's link count, if the newly deleted item is a directory
+	if (S_ISDIR(inode->i_mode)) {
+        drop_nlink(dir);
+    }
+
+	//call mark_inode_dirty() to mark the parent's inode as dirty
+	mark_inode_dirty(dir);
+
+	//get the data block of the deleted file
+	bno = AUDI_INODE(inode)->data_block;
+
+	//zero out the data block belonging to the deleted file.
+	memset(&bno, 0, sizeof(bno));
+
+	//get the deleted file's super_block
+	sb = inode->i_sb;
+
+	//get the audi_sb_info using the super_block
+	sbi = AUDI_SB(sb);
+
+	//update the data bitmap to mark this data block is free.
+	put_block(sbi, bno);
+
+	//reset inode information (all to 0) and then call mark_inode_dirty()
+	AUDI_INODE(inode)->data_block = 0;
+    inode->i_size = 0;
+    i_uid_write(inode, 0);
+    i_gid_write(inode, 0);
+    inode->i_mode = 0;
+    inode->i_ctime.tv_sec = inode->i_mtime.tv_sec = inode->i_atime.tv_sec = 0;
+    drop_nlink(inode);
+    mark_inode_dirty(inode);
+
+	//call put_inode() so as to update the inode bitmap to mark this inode is free.
+	put_inode(sbi, inode->i_ino);
+
+	//we can now return 0
     return 0;
 }
 
