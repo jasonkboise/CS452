@@ -278,6 +278,8 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	bh = sb_bread(sb, block_num);
 	dir_block = (struct audi_dir_block *) bh->b_data;
 
+	printk("entry 63 inode number: %d", dir_block->entries[63].inode);
+
 	//if the dentry table is already full
 	if (dir_block->entries[63].inode != 0) {
 		return -EMLINK;
@@ -294,6 +296,12 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 			strncpy(dir_block->entries[i].name, dentry->d_name.name, len);
 			break;
 		}
+	}
+
+	
+	printk("After creating: \n");
+	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
+		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
 	}
 
 	//mark the buffer dirty so the change is flushed back into the disk
@@ -423,27 +431,43 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 	bh = sb_bread(sb, block_num);
 	dir_block = (struct audi_dir_block *) bh->b_data;
 
-	//search for the inode
+	//search for the inode and call memmove() to overwrite it
 	found = 0;
 	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
 		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0) {
 			found = 1;
 			inode = audi_iget(sb, dir_block->entries[i].inode);
-			memmove(dir_block->entries+(i*sizeof(struct audi_dir_entry)), dir_block->entries+((i+1)*sizeof(struct audi_dir_entry)), sizeof(struct audi_dir_entry)*(64-(i+1)));
+			memmove((char *)dir_block->entries+(i*sizeof(struct audi_dir_entry)), (char *)dir_block->entries+((i+1)*sizeof(struct audi_dir_entry)), sizeof(struct audi_dir_entry)*(64-(i+1)));
 			break;
 		}
+	}
+
+
+	printk("After memmove, before memset: \n");
+	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
+		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
 	}
 
 	//if the dentry wasn't found, return -ENOENT
 	if (!found) return -ENOENT;
 
+	
 	//0 out the last entry in the table
-	for (i = 0; i < AUDI_MAX_SUBFILES-1; i++) {
-		if (dir_block->entries[i+1].inode == 0) {
-			memset(dir_block->entries+(i*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
+	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
+		if (dir_block->entries[i].inode == 0) {
+			memset((char *)dir_block->entries+(i*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
 			break;
 		}
 	}
+	
+	printk("After memset: \n");
+	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
+		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
+	}
+
+	//mark the buffer dirty so the change is flushed back into the disk
+	mark_buffer_dirty(bh);
+	brelse(bh);
 
 	//update the parent directory's last modified time and last accessed time to current time
 	dir->i_mtime = dir->i_atime = CURRENT_TIME;
@@ -460,7 +484,7 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 	bno = AUDI_INODE(inode)->data_block;
 
 	//zero out the data block belonging to the deleted file.
-	memset(&bno, 0, sizeof(bno));
+	memset(&bno, 0, inode->i_size);
 
 	//get the deleted file's super_block
 	sb = inode->i_sb;
