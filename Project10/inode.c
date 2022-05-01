@@ -278,8 +278,6 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	bh = sb_bread(sb, block_num);
 	dir_block = (struct audi_dir_block *) bh->b_data;
 
-	printk("entry 63 inode number: %d", dir_block->entries[63].inode);
-
 	//if the dentry table is already full
 	if (dir_block->entries[63].inode != 0) {
 		return -EMLINK;
@@ -442,27 +440,15 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 		}
 	}
 
-
-	printk("After memmove, before memset: \n");
-	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
-		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
-	}
-
 	//if the dentry wasn't found, return -ENOENT
 	if (!found) return -ENOENT;
 
-	
 	//0 out the last entry in the table
 	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
 		if (dir_block->entries[i].inode == 0) {
 			memset((char *)dir_block->entries+(i*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
 			break;
 		}
-	}
-	
-	printk("After memset: \n");
-	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
-		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
 	}
 
 	//mark the buffer dirty so the change is flushed back into the disk
