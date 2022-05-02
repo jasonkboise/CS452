@@ -419,7 +419,7 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 	struct audi_sb_info *sbi;
 	struct buffer_head *bh;
 	struct audi_dir_block *dir_block;
-	int len, i, block_num, found, bno;
+	int len, i, block_num, found, bno, j;
 	char *block;
 
 	len = strlen(dentry->d_name.name);
@@ -439,27 +439,28 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 	bh = sb_bread(sb, block_num);
 	dir_block = (struct audi_dir_block *) bh->b_data;
 
+	//find the end position of the entries table
+	j = 0;
+	while (dir_block->entries[j].inode != 0 && j < AUDI_MAX_SUBFILES) {
+		j++;
+	}
+
 	//search for the inode and call memmove() to overwrite it
 	found = 0;
 	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
-		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0) {
+		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0 && !found) {
 			found = 1;
 			inode = audi_iget(sb, dir_block->entries[i].inode);
 			memmove((char *)dir_block->entries+(i*sizeof(struct audi_dir_entry)), (char *)dir_block->entries+((i+1)*sizeof(struct audi_dir_entry)), sizeof(struct audi_dir_entry)*(64-(i+1)));
-			break;
 		}
 	}
 
 	//if the dentry wasn't found, return -ENOENT
 	if (!found) return -ENOENT;
 
-	//0 out the last entry in the table
-	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
-		if (dir_block->entries[i].inode == 0) {
-			memset((char *)dir_block->entries+(i*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
-			break;
-		}
-	}
+	//0 out the previous end position
+	memset((char *)dir_block->entries+((j-1)*sizeof(struct audi_dir_entry)), 0, sizeof(struct audi_dir_entry));
+	
 
 	//mark the buffer dirty so the change is flushed back into the disk
 	mark_buffer_dirty(bh);
@@ -548,7 +549,7 @@ static int audi_rmdir(struct inode *dir, struct dentry *dentry)
 
 	//count how many entries are in the data block
 	i = 0;
-	while (dir_block->entries[i].inode != 0) {
+	while (dir_block->entries[i].inode != 0 && i < AUDI_MAX_SUBFILES) {
 		i++;
 	}
 
