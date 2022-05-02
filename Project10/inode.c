@@ -290,17 +290,20 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 	//insert the new inode at the end of the parent's dentry table
 	for (i = 0; i < AUDI_MAX_SUBFILES; i++) {
 		if (dir_block->entries[i].inode == 0) {
+			pr_info("updating dblock->entries[%d].inode to %ld..\n", i, inode->i_ino);
+			pr_info("entries[0].inode is %d, entries[1].inode is %d\n", dir_block->entries[0].inode, dir_block->entries[1].inode);
 			dir_block->entries[i].inode = inode->i_ino;
 			strncpy(dir_block->entries[i].name, dentry->d_name.name, len);
 			break;
 		}
 	}
 
-	
 	printk("After creating: \n");
 	for (i = 0; i<AUDI_MAX_SUBFILES; i++) {
-		printk("inode %d: i_num = %d, name = %s \n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
+		printk("inode %d: i_num = %d, name = %s\n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
 	}
+
+	
 
 	//mark the buffer dirty so the change is flushed back into the disk
 	mark_buffer_dirty(bh);
@@ -322,6 +325,11 @@ static int audi_create(struct inode *dir, struct dentry *dentry, umode_t mode, b
 
 	//call d_instantiate() to fill in the inode information for a dentry.
 	d_instantiate(dentry, inode);
+
+	printk("parent dir's nlink after create: %d\n", dir->i_nlink);
+	printk("new file's nlink after create: %d\n", inode->i_nlink);
+
+	
 
 	//we can now return 0.
     return 0;
@@ -368,6 +376,7 @@ static struct dentry *audi_lookup(struct inode *dir, struct dentry *dentry, unsi
 		if (strncmp(dir_block->entries[i].name, dentry->d_name.name, len) == 0) {
 			found = 1;
 			inode = audi_iget(sb, dir_block->entries[i].inode);
+			printk("inode %d: i_num = %d, name = %s\n", i, dir_block->entries[i].inode, dir_block->entries[i].name);
 			break;
 		}
 	}
@@ -411,6 +420,7 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 	struct buffer_head *bh;
 	struct audi_dir_block *dir_block;
 	int len, i, block_num, found, bno;
+	char *block;
 
 	len = strlen(dentry->d_name.name);
 	if (len > AUDI_FILENAME_LEN) {
@@ -468,13 +478,18 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
 
 	//get the data block of the deleted file
 	bno = AUDI_INODE(inode)->data_block;
-
+	bh = sb_bread(sb, bno);
+	dir_block = (struct audi_dir_block *) bh->b_data;
+	block = (char *) dir_block;
 	//zero out the data block belonging to the deleted file.
-	memset(&bno, 0, inode->i_size);
+	memset(block, 0, AUDI_BLOCK_SIZE);
+
+	//mark the buffer dirty so the change is flushed back into the disk
+	mark_buffer_dirty(bh);
+	brelse(bh);
 
 	//get the deleted file's super_block
 	sb = inode->i_sb;
-
 	//get the audi_sb_info using the super_block
 	sbi = AUDI_SB(sb);
 
@@ -486,9 +501,12 @@ static int audi_unlink(struct inode *dir, struct dentry *dentry)
     inode->i_size = 0;
     i_uid_write(inode, 0);
     i_gid_write(inode, 0);
+	drop_nlink(inode);
+	if (S_ISDIR(inode->i_mode)) {
+		drop_nlink(inode); //drop again if the inode is a dir
+	}
     inode->i_mode = 0;
     inode->i_ctime.tv_sec = inode->i_mtime.tv_sec = inode->i_atime.tv_sec = 0;
-    drop_nlink(inode);
     mark_inode_dirty(inode);
 
 	//call put_inode() so as to update the inode bitmap to mark this inode is free.
@@ -507,8 +525,40 @@ static int audi_mkdir(struct inode *dir, struct dentry *dentry, umode_t mode)
 /* dir is the parent directory; dentry represents the directory we want to delete. */
 static int audi_rmdir(struct inode *dir, struct dentry *dentry)
 {
+	struct inode *inode;
+	struct super_block *sb;
+	struct buffer_head *bh;
+	struct audi_dir_block *dir_block;
+	int i, block_num;
+
+	inode = d_inode(dentry);
+	if (inode->i_nlink > 2) {
+		return -ENOTEMPTY;
+	}
+
+	//get the directory's super_block
+	sb = inode->i_sb;
+
+	//get the directory's block number
+	block_num = AUDI_INODE(inode)->data_block;
+	
+	//get the data block 
+	bh = sb_bread(sb, block_num);
+	dir_block = (struct audi_dir_block *) bh->b_data;
+
+	//count how many entries are in the data block
+	i = 0;
+	while (dir_block->entries[i].inode != 0) {
+		i++;
+	}
+
+	//if it contains more than 2 entries, we know its not empty, still return -ENOTEMPTY.
+	if (i > 2) {
+		return -ENOTEMPTY;
+	}
+
 	pr_info("removing a directory...\n");
-    return 0;
+    return audi_unlink(dir, dentry);
 }
 
 const struct inode_operations audi_dir_inode_ops = {
